@@ -39,11 +39,11 @@ import (
 	v "gomodules.xyz/x/version"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
-	cu "kmodules.xyz/client-go/client"
 	"kmodules.xyz/client-go/discovery"
 	"kmodules.xyz/client-go/meta"
 	"kmodules.xyz/client-go/tools/clusterid"
@@ -99,12 +99,12 @@ func NewCmdRun() *cobra.Command {
 
 			info := license.NewLicenseEnforcer(cfg, licenseFile).LoadLicense()
 			if info.Status != licenseapi.LicenseActive {
-				klog.Infof("License status %s", info.Status)
+				klog.Infof("License status %s, reason: %s", info.Status, info.Reason)
 				os.Exit(1)
 			}
 
 			// audit event publisher
-			cid, err := cu.ClusterUID(mgr.GetClient())
+			cid, err := clusterid.ClusterUID(kubernetes.NewForConfigOrDie(cfg).CoreV1().Namespaces())
 			if err != nil {
 				setupLog.Error(err, "failed to detect cluster id")
 				os.Exit(1)
