@@ -19,9 +19,11 @@ package cmds
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -31,6 +33,7 @@ import (
 	"kubeops.dev/cluster-connector/pkg/shared"
 	"kubeops.dev/cluster-connector/pkg/transport"
 
+	"github.com/go-logr/logr"
 	"github.com/nats-io/nats.go"
 	"github.com/spf13/cobra"
 	auditlib "go.bytebuilders.dev/audit/lib"
@@ -57,6 +60,7 @@ var (
 )
 
 var (
+	linkID      string
 	licenseFile string
 	metricsAddr string
 	probeAddr   string
@@ -216,6 +220,16 @@ func NewCmdRun() *cobra.Command {
 				os.Exit(1)
 			}
 
+			if err := mgr.Add(&callback{
+				req: shared.CallbackRequest{
+					LinkID:    linkID,
+					ClusterID: cid,
+				},
+			}); err != nil {
+				setupLog.Error(err, "failed to add link callback")
+				os.Exit(1)
+			}
+
 			setupLog.Info("starting manager")
 			if err := mgr.Start(ctx); err != nil {
 				setupLog.Error(err, "problem running manager")
@@ -226,6 +240,7 @@ func NewCmdRun() *cobra.Command {
 
 	meta.AddLabelBlacklistFlag(cmd.Flags())
 	clusterid.AddFlags(cmd.Flags())
+	cmd.Flags().StringVar(&linkID, "link-id", linkID, "Link id")
 	cmd.Flags().StringVar(&licenseFile, "license-file", licenseFile, "Path to license file")
 	cmd.Flags().StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	cmd.Flags().StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
@@ -279,4 +294,39 @@ func respond(in []byte) (*transport.R, *http.Request, *http.Response, error) {
 	}
 	resp, err := httpClient.Do(req)
 	return &r, req, resp, err
+}
+
+type callback struct {
+	req shared.CallbackRequest
+	log logr.Logger
+}
+
+func (cb *callback) InjectLogger(l logr.Logger) error {
+	cb.log = l
+	return nil
+}
+
+func (cb *callback) Start(context.Context) error {
+	data, err := json.Marshal(cb.req)
+	if err != nil {
+		return err
+	}
+
+	resp, err := http.Post(shared.ConnectorCallbackEndpoint(), "application/json", bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	_, err = io.Copy(ioutil.Discard, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("callback failed with status code %s", resp.Status)
+	}
+
+	cb.log.Info("link callback successful")
+	return nil
 }
