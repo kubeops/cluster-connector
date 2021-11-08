@@ -544,8 +544,8 @@ go.bytebuilders.dev/audit v0.0.12-0.20211107052438-17b6e0a0bcbe h1:rviCkV5mRQns1
 go.bytebuilders.dev/audit v0.0.12-0.20211107052438-17b6e0a0bcbe/go.mod h1:ByBiBbgRf3y+frLEWnxjJJCYn4rXN5TTb9Dc0Kfr0tI=
 go.bytebuilders.dev/license-verifier v0.9.3 h1:foHyjil3Y2OesjUInQZeRl5kntWWCPkqqQOz1wSAmLo=
 go.bytebuilders.dev/license-verifier v0.9.3/go.mod h1:GpIW0o8O0wpiBVt7IIz4z7bcPuG8nza8/bCDkaupDn8=
-go.bytebuilders.dev/license-verifier/kubernetes v0.9.3 h1:rrgo72xtiEEyE0exFSQ8HMpQpxt+hpJW2a9QWOkk4n4=
-go.bytebuilders.dev/license-verifier/kubernetes v0.9.3/go.mod h1:PjBQMcD/iYzJYKkWlTl0DnMPeAzjow/jH9Rg8L8Cmc8=
+go.bytebuilders.dev/license-verifier/kubernetes v0.9.4-0.20211108121117-852214422177 h1:fdEX4l9s8dEQm7d2xrwFlRxvmMdpWMrtGnPWZXuBhtM=
+go.bytebuilders.dev/license-verifier/kubernetes v0.9.4-0.20211108121117-852214422177/go.mod h1:PjBQMcD/iYzJYKkWlTl0DnMPeAzjow/jH9Rg8L8Cmc8=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/bbolt v1.3.3/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/bbolt v1.3.5/go.mod h1:G5EMThwa9y8QZGBClrRx5EY+Yw9kAhnjy3bSjsnlVTQ=

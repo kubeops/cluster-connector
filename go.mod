@@ -9,7 +9,7 @@ require (
 	github.com/spf13/cobra v1.1.3
 	go.bytebuilders.dev/audit v0.0.12-0.20211107052438-17b6e0a0bcbe
 	go.bytebuilders.dev/license-verifier v0.9.3
-	go.bytebuilders.dev/license-verifier/kubernetes v0.9.3
+	go.bytebuilders.dev/license-verifier/kubernetes v0.9.4-0.20211108121117-852214422177
 	gomodules.xyz/cert v1.4.1
 	gomodules.xyz/logs v0.0.6
 	gomodules.xyz/runtime v0.2.0

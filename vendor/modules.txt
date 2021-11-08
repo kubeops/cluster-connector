@@ -234,7 +234,7 @@ go.bytebuilders.dev/license-verifier
 go.bytebuilders.dev/license-verifier/apis/licenses
 go.bytebuilders.dev/license-verifier/apis/licenses/v1alpha1
 go.bytebuilders.dev/license-verifier/info
-# go.bytebuilders.dev/license-verifier/kubernetes v0.9.3
+# go.bytebuilders.dev/license-verifier/kubernetes v0.9.4-0.20211108121117-852214422177
 ## explicit; go 1.16
 go.bytebuilders.dev/license-verifier/kubernetes
 # go.uber.org/atomic v1.7.0
