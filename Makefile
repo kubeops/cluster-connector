@@ -355,17 +355,21 @@ else
 	IMAGE_PULL_SECRETS = --set imagePullSecrets[0].name=$(REGISTRY_SECRET)
 endif
 
-LICENSE_FILE ?=
+USER_NAME  ?= $(shell git config user.name)
+USER_EMAIL ?= $(shell git config user.email)
+USER_TOKEN ?= $(BYTEBUILDERS_LICENSE_TOKEN)
 
 .PHONY: install
 install:
 	@cd ../installer; \
 	helm install cluster-connector charts/cluster-connector --wait \
 		--namespace=$(KUBE_NAMESPACE) --create-namespace \
-		--set-file license=$(LICENSE_FILE) \
 		--set image.registry=$(REGISTRY) \
 		--set image.tag=$(TAG) \
 		--set imagePullPolicy=IfNotPresent \
+		--set user.name='$(USER_NAME)' \
+		--set user.email=$(USER_EMAIL) \
+		--set user.token=$(USER_TOKEN) \
 		$(IMAGE_PULL_SECRETS); \
 
 .PHONY: uninstall
