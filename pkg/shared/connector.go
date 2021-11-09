@@ -49,11 +49,11 @@ const (
 )
 
 func ProxyHandlerSubject(clusterUID string) string {
-	return fmt.Sprintf("cluster.%s.proxy.handler", clusterUID)
+	return fmt.Sprintf("k8s.%s.proxy.handler", clusterUID)
 }
 
 func ProxyStatusSubject(clusterUID string) string {
-	return fmt.Sprintf("cluster.%s.proxy.status", clusterUID)
+	return fmt.Sprintf("k8s.%s.proxy.status", clusterUID)
 }
 
 func ConnectorLinkAPIEndpoint() string {
