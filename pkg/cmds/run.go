@@ -38,6 +38,7 @@ import (
 	"github.com/spf13/cobra"
 	auditlib "go.bytebuilders.dev/audit/lib"
 	licenseapi "go.bytebuilders.dev/license-verifier/apis/licenses/v1alpha1"
+	"go.bytebuilders.dev/license-verifier/info"
 	license "go.bytebuilders.dev/license-verifier/kubernetes"
 	v "gomodules.xyz/x/version"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
@@ -59,20 +60,14 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
-var (
-	linkID      string
-	licenseFile string
-	metricsAddr string
-	probeAddr   string
-
-	pool = sync.Pool{
-		New: func() interface{} {
-			return new(bytes.Buffer)
-		},
-	}
-)
-
 func NewCmdRun() *cobra.Command {
+	var (
+		linkID      string
+		licenseFile string
+		metricsAddr string
+		natsAddr    string
+		probeAddr   string
+	)
 	cmd := &cobra.Command{
 		Use:               "run",
 		Short:             "Launch Cluster Connector",
@@ -80,9 +75,16 @@ func NewCmdRun() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			klog.Infof("Starting binary version %s+%s ...", v.Version.Version, v.Version.CommitHash)
 
-			if licenseFile == "" {
-				setupLog.Info("missing license key")
-				os.Exit(1)
+			if info.SkipLicenseVerification() {
+				if natsAddr == "" && licenseFile == "" {
+					setupLog.Info("set either --nats-addr or --license-file flag")
+					os.Exit(1)
+				}
+			} else {
+				if licenseFile == "" {
+					setupLog.Info("missing license key")
+					os.Exit(1)
+				}
 			}
 
 			ctrl.SetLogger(klogr.New())
@@ -102,112 +104,55 @@ func NewCmdRun() *cobra.Command {
 			}
 			cfg := mgr.GetConfig()
 
-			info := license.NewLicenseEnforcer(cfg, licenseFile).LoadLicense()
-			if info.Status != licenseapi.LicenseActive {
-				klog.Infof("License status %s, reason: %s", info.Status, info.Reason)
-				os.Exit(1)
-			}
-
-			// audit event publisher
 			cid, err := clusterid.ClusterUID(kubernetes.NewForConfigOrDie(cfg).CoreV1().Namespaces())
 			if err != nil {
 				setupLog.Error(err, "failed to detect cluster id")
 				os.Exit(1)
 			}
-			mapper := discovery.NewResourceMapper(mgr.GetRESTMapper())
-			fn := auditlib.BillingEventCreator{
-				Mapper: mapper,
-			}
-			auditor := auditlib.NewResilientEventPublisher(func() (*auditlib.NatsConfig, error) {
-				return auditlib.NewNatsConfig(cid, licenseFile)
-			}, mapper, fn.CreateEvent)
 
-			// Start periodic license verification
-			//nolint:errcheck
-			go license.VerifyLicensePeriodically(mgr.GetConfig(), licenseFile, ctx.Done())
+			var nc *nats.Conn
+			if licenseFile != "" {
+				lic := license.NewLicenseEnforcer(cfg, licenseFile).LoadLicense()
+				if lic.Status != licenseapi.LicenseActive {
+					klog.Infof("License status %s, reason: %s", lic.Status, lic.Reason)
+					os.Exit(1)
+				}
 
-			if err := auditor.SetupSiteInfoPublisherWithManager(mgr); err != nil {
-				setupLog.Error(err, "unable to setup site info publisher")
-				os.Exit(1)
-			}
+				// audit event publisher
+				mapper := discovery.NewResourceMapper(mgr.GetRESTMapper())
+				fn := auditlib.BillingEventCreator{
+					Mapper: mapper,
+				}
+				auditor := auditlib.NewResilientEventPublisher(func() (*auditlib.NatsConfig, error) {
+					return auditlib.NewNatsConfig(cid, licenseFile)
+				}, mapper, fn.CreateEvent)
 
-			nc, err := auditor.NatsClient()
-			if err != nil {
-				setupLog.Error(err, "failed to connect to nats")
-				os.Exit(1)
-			}
-			queue := fmt.Sprintf("proxy.%s", cid)
+				// Start periodic license verification
+				//nolint:errcheck
+				go license.VerifyLicensePeriodically(mgr.GetConfig(), licenseFile, ctx.Done())
 
-			_, err = nc.QueueSubscribe(shared.ProxyHandlerSubject(cid), queue, func(msg *nats.Msg) {
-				r2, req, resp, err := respond(msg.Data)
+				if err := auditor.SetupSiteInfoPublisherWithManager(mgr); err != nil {
+					setupLog.Error(err, "unable to setup site lic publisher")
+					os.Exit(1)
+				}
+
+				nc, err = auditor.NatsClient()
 				if err != nil {
-					status := responsewriters.ErrorToAPIStatus(err)
-					data, _ := json.Marshal(status)
-
-					resp = &http.Response{
-						Status:           "", // status.Status,
-						StatusCode:       int(status.Code),
-						Proto:            "",
-						ProtoMajor:       0,
-						ProtoMinor:       0,
-						Header:           nil,
-						Body:             io.NopCloser(bytes.NewReader(data)),
-						ContentLength:    int64(len(data)),
-						TransferEncoding: nil,
-						Close:            true,
-						Uncompressed:     false,
-						Trailer:          nil,
-						Request:          nil,
-						TLS:              nil,
-					}
-					if req != nil {
-						resp.Proto = req.Proto
-						resp.ProtoMajor = req.ProtoMajor
-						resp.ProtoMinor = req.ProtoMinor
-
-						resp.TransferEncoding = req.TransferEncoding
-						resp.Request = req
-						resp.TLS = req.TLS
-					}
-					if r2 != nil {
-						resp.Uncompressed = r2.DisableCompression
-					}
+					setupLog.Error(err, "failed to connect to nats")
+					os.Exit(1)
 				}
-
-				buf := pool.Get().(*bytes.Buffer)
-				defer pool.Put(buf)
-				buf.Reset()
-
-				respMsg := &nats.Msg{
-					Subject: msg.Reply,
+			} else {
+				nc, err = nats.Connect(natsAddr)
+				if err != nil {
+					setupLog.Error(err, "failed to connect to nats")
+					os.Exit(1)
 				}
-				if err := resp.Write(buf); err != nil { // WriteProxy
-					respMsg.Data = []byte(err.Error())
-				} else {
-					respMsg.Data = buf.Bytes()
-				}
-
-				if err := msg.RespondMsg(respMsg); err != nil {
-					klog.ErrorS(err, "failed to respond to proxy request")
-				}
-			})
-			if err != nil {
-				setupLog.Error(err, "failed to setup proxy handler subscriber")
-				os.Exit(1)
 			}
+			defer nc.Close()
 
-			_, err = nc.QueueSubscribe(shared.ProxyStatusSubject(cid), queue, func(msg *nats.Msg) {
-				if bytes.Equal(msg.Data, []byte("PING")) {
-					if err := msg.RespondMsg(&nats.Msg{
-						Subject: msg.Reply,
-						Data:    []byte("PONG"),
-					}); err != nil {
-						klog.ErrorS(err, "failed to respond to ping")
-					}
-				}
-			})
+			err = addSubscribers(nc, cid)
 			if err != nil {
-				setupLog.Error(err, "failed to setup proxy status subscriber")
+				setupLog.Error(err, "failed to setup proxy handler subscribers")
 				os.Exit(1)
 			}
 
@@ -243,9 +188,93 @@ func NewCmdRun() *cobra.Command {
 	cmd.Flags().StringVar(&linkID, "link-id", linkID, "Link id")
 	cmd.Flags().StringVar(&licenseFile, "license-file", licenseFile, "Path to license file")
 	cmd.Flags().StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
+	cmd.Flags().StringVar(&natsAddr, "nats-addr", "", "The NATS server address (only used for development).")
 	cmd.Flags().StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 
 	return cmd
+}
+
+var pool = sync.Pool{
+	New: func() interface{} {
+		return new(bytes.Buffer)
+	},
+}
+
+func addSubscribers(nc *nats.Conn, cid string) error {
+	queue := fmt.Sprintf("k8s.%s.proxy", cid)
+
+	_, err := nc.QueueSubscribe(shared.ProxyHandlerSubject(cid), queue, func(msg *nats.Msg) {
+		r2, req, resp, err := respond(msg.Data)
+		if err != nil {
+			status := responsewriters.ErrorToAPIStatus(err)
+			data, _ := json.Marshal(status)
+
+			resp = &http.Response{
+				Status:           "", // status.Status,
+				StatusCode:       int(status.Code),
+				Proto:            "",
+				ProtoMajor:       0,
+				ProtoMinor:       0,
+				Header:           nil,
+				Body:             io.NopCloser(bytes.NewReader(data)),
+				ContentLength:    int64(len(data)),
+				TransferEncoding: nil,
+				Close:            true,
+				Uncompressed:     false,
+				Trailer:          nil,
+				Request:          nil,
+				TLS:              nil,
+			}
+			if req != nil {
+				resp.Proto = req.Proto
+				resp.ProtoMajor = req.ProtoMajor
+				resp.ProtoMinor = req.ProtoMinor
+
+				resp.TransferEncoding = req.TransferEncoding
+				resp.Request = req
+				resp.TLS = req.TLS
+			}
+			if r2 != nil {
+				resp.Uncompressed = r2.DisableCompression
+			}
+		}
+
+		buf := pool.Get().(*bytes.Buffer)
+		defer pool.Put(buf)
+		buf.Reset()
+
+		respMsg := &nats.Msg{
+			Subject: msg.Reply,
+		}
+		if err := resp.Write(buf); err != nil { // WriteProxy
+			respMsg.Data = []byte(err.Error())
+		} else {
+			respMsg.Data = buf.Bytes()
+		}
+
+		if err := msg.RespondMsg(respMsg); err != nil {
+			klog.ErrorS(err, "failed to respond to proxy request")
+		}
+	})
+	if err != nil {
+		return err
+	}
+
+	_, err = nc.QueueSubscribe(shared.ProxyStatusSubject(cid), queue, func(msg *nats.Msg) {
+		if bytes.Equal(msg.Data, []byte("PING")) {
+			if err := msg.RespondMsg(&nats.Msg{
+				Subject: msg.Reply,
+				Data:    []byte("PONG"),
+			}); err != nil {
+				klog.ErrorS(err, "failed to respond to ping")
+			}
+		}
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // k8s.io/client-go/transport/cache.go
