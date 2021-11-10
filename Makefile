@@ -355,6 +355,8 @@ else
 	IMAGE_PULL_SECRETS = --set imagePullSecrets[0].name=$(REGISTRY_SECRET)
 endif
 
+NATS_ADDR  ?=
+
 USER_NAME  ?= $(shell git config user.name)
 USER_EMAIL ?= $(shell git config user.email)
 USER_TOKEN ?= $(BYTEBUILDERS_LICENSE_TOKEN)
@@ -364,9 +366,10 @@ install:
 	@cd ../installer; \
 	helm install cluster-connector charts/cluster-connector --wait \
 		--namespace=$(KUBE_NAMESPACE) --create-namespace \
-		--set image.registry=$(REGISTRY) \
+		--set image.repository=$(REGISTRY)/$(BIN) \
 		--set image.tag=$(TAG) \
 		--set imagePullPolicy=IfNotPresent \
+		--set nats.address=$(NATS_ADDR) \
 		--set user.name='$(USER_NAME)' \
 		--set user.email=$(USER_EMAIL) \
 		--set user.token=$(USER_TOKEN) \
