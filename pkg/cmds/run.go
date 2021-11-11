@@ -167,8 +167,9 @@ func NewCmdRun() *cobra.Command {
 
 			if err := mgr.Add(&callback{
 				req: shared.CallbackRequest{
-					LinkID:    linkID,
-					ClusterID: cid,
+					LinkID:      linkID,
+					ClusterID:   cid,
+					ProductName: info.ProductName,
 				},
 			}); err != nil {
 				setupLog.Error(err, "failed to add link callback")

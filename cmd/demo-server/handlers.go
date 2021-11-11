@@ -68,7 +68,7 @@ func genLink(fs blobfs.Interface, bs *lib.BlobStore, u shared.User, req shared.L
 		ClusterID:  "", // unknown
 		NotAfter:   now.Add(shared.ConnectorLinkLifetime),
 		User:       u,
-		Kubeconfig: req.Kubeconfig,
+		KubeConfig: req.KubeConfig,
 	}
 	// save l info in the database
 	return l, nil
@@ -92,7 +92,7 @@ func handleCallback(fs blobfs.Interface, nc *nats.Conn, in shared.CallbackReques
 	}
 
 	// check clusterID
-	cfg, err := restproxy.GetForKubeConfig([]byte(l.Kubeconfig), "", nc, in.ClusterID)
+	cfg, err := restproxy.GetForKubeConfig([]byte(l.KubeConfig), "", nc, in.ClusterID)
 	if err != nil {
 		return fmt.Errorf("failed to proxied rest config, reason: %v", err)
 	}
