@@ -566,6 +566,8 @@ github.com/kmodules/apiserver v0.21.2-0.20210716212718-83e5493ac170 h1:JnFBVfamG
 github.com/kmodules/apiserver v0.21.2-0.20210716212718-83e5493ac170/go.mod h1:nLLYZvMWn35glJ4/FZRhzLG/3MPxAaZTgV4FJZdr+tY=
 github.com/kmodules/application v0.8.4-0.20210427030912-90eeee3bc4ad h1:bLX7w0CEGCd/8gLO++ONzL2nziePFK57Kn3gJJhHeWA=
 github.com/kmodules/application v0.8.4-0.20210427030912-90eeee3bc4ad/go.mod h1:RoNyT1ItAQurzNxBKsMn95tIo0EjJpTFtZG8rfOGIT4=
+github.com/kmodules/k8s-client-go v0.21.2-0.20210626063127-9ea1a0e30c24 h1:KdoJM8mNCBudNmfEmRJXCtzM023DP6exP70um1io74M=
+github.com/kmodules/k8s-client-go v0.21.2-0.20210626063127-9ea1a0e30c24/go.mod h1:/kEw4RgW+3xnBGzvp9IWxKSNA+lXn3A7AuH3gdOAzLs=
 github.com/kmodules/kubernetes v1.22.0-alpha.0.0.20210617232219-a432af45d932/go.mod h1:mgkvSg6x5tL795vhwYyg0pKDYmCm/WYdy8LI54LvRJA=
 github.com/konsorten/go-windows-terminal-sequences v1.0.1/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
 github.com/konsorten/go-windows-terminal-sequences v1.0.2/go.mod h1:T0+1ngSBFLxvqU3pZ+m/2kptfBszLMUkC4ZK/EgS/cQ=
@@ -1382,8 +1384,6 @@ k8s.io/apiextensions-apiserver v0.21.1 h1:AA+cnsb6w7SZ1vD32Z+zdgfXdXY8X9uGX5bN6E
 k8s.io/apiextensions-apiserver v0.21.1/go.mod h1:KESQFCGjqVcVsZ9g0xX5bacMjyX5emuWcS2arzdEouA=
 k8s.io/cli-runtime v0.21.1 h1:Oj/iZxa7LLXrhzShaLNF4rFJEIEBTDHj0dJw4ra2vX4=
 k8s.io/cli-runtime v0.21.1/go.mod h1:TI9Bvl8lQWZB2KqE91QLCp9AZE4l29zNFnj/x4IX4Fw=
-k8s.io/client-go v0.21.1 h1:bhblWYLZKUu+pm50plvQF8WpY6TXdRRtcS/K9WauOj4=
-k8s.io/client-go v0.21.1/go.mod h1:/kEw4RgW+3xnBGzvp9IWxKSNA+lXn3A7AuH3gdOAzLs=
 k8s.io/cloud-provider v0.21.1/go.mod h1:GgiRu7hOsZh3+VqMMbfLJJS9ZZM9A8k/YiZG8zkWpX4=
 k8s.io/cluster-bootstrap v0.21.1/go.mod h1:izdXmPTfqI9gkjQLf9PQ1Y9/DSqG54zU2UByEzgdajs=
 k8s.io/code-generator v0.18.2/go.mod h1:+UHX5rSbxmR8kzS+FAv7um6dtYrZokQvjHpDSYRVkTc=

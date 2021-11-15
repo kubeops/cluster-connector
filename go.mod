@@ -319,7 +319,7 @@ replace k8s.io/apiserver => github.com/kmodules/apiserver v0.21.2-0.202107162127
 
 replace k8s.io/cli-runtime => k8s.io/cli-runtime v0.21.1
 
-replace k8s.io/client-go => k8s.io/client-go v0.21.1
+replace k8s.io/client-go => github.com/kmodules/k8s-client-go v0.21.2-0.20210626063127-9ea1a0e30c24
 
 replace k8s.io/component-base => k8s.io/component-base v0.21.1
 

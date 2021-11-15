@@ -85,6 +85,9 @@ func handle(w http.ResponseWriter, r *http.Request, nc *nats.Conn) error {
 		return errors.NewBadRequest(fmt.Sprintf("invalid service request %q", name))
 	}
 	c, err := httpproxy.NewClient(nc, clusterID)
+	if err != nil {
+		return err
+	}
 
 	p := "/"
 	parts := strings.Split(r.URL.Path, "/")
