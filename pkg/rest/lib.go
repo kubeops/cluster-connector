@@ -26,10 +26,10 @@ import (
 )
 
 func GetForRestConfig(config *rest.Config, nc *nats.Conn, cid string) (*rest.Config, error) {
-	return getConfig(rest.CopyConfig(config), nc, cid)
+	return GetNoCopyConfig(rest.CopyConfig(config), nc, cid)
 }
 
-func getConfig(copy *rest.Config, nc *nats.Conn, cid string) (*rest.Config, error) {
+func GetNoCopyConfig(copy *rest.Config, nc *nats.Conn, cid string) (*rest.Config, error) {
 	cfg, err := copy.TransportConfig()
 	if err != nil {
 		return nil, err
@@ -47,5 +47,5 @@ func GetForKubeConfig(kubeconfigBytes []byte, contextName string, nc *nats.Conn,
 	if err != nil {
 		return nil, err
 	}
-	return getConfig(config, nc, cid)
+	return GetNoCopyConfig(config, nc, cid)
 }
