@@ -29,7 +29,7 @@ type LinkData struct {
 	ClusterID  string
 	NotAfter   time.Time
 	User       User
-	Kubeconfig string
+	KubeConfig string
 }
 
 type User struct {
@@ -48,10 +48,11 @@ type ChartValues struct {
 }
 
 type LinkRequest struct {
-	Kubeconfig string `json:"kubeconfig"`
+	KubeConfig string `json:"kubeConfig"`
 }
 
 type CallbackRequest struct {
-	LinkID    string
-	ClusterID string
+	LinkID      string `json:"linkID"`
+	ClusterID   string `json:"clusterID"`
+	ProductName string `json:"productName"`
 }
