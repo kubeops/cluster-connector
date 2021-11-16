@@ -30,6 +30,10 @@ func GetForRestConfig(config *rest.Config, nc *nats.Conn, cid string) (*rest.Con
 }
 
 func GetNoCopyConfig(copy *rest.Config, nc *nats.Conn, cid string) (*rest.Config, error) {
+	if nc == nil {
+		return copy, nil
+	}
+
 	cfg, err := copy.TransportConfig()
 	if err != nil {
 		return nil, err
