@@ -9,6 +9,7 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/nats-io/nats.go v1.13.0
 	github.com/spf13/cobra v1.1.3
+	github.com/spf13/pflag v1.0.5
 	github.com/unrolled/render v1.4.0
 	go.bytebuilders.dev/audit v0.0.12
 	go.bytebuilders.dev/license-verifier v0.9.4
@@ -24,6 +25,7 @@ require (
 	gomodules.xyz/x v0.0.8
 	k8s.io/apimachinery v0.21.1
 	k8s.io/apiserver v0.21.1
+	k8s.io/cli-runtime v0.21.1
 	k8s.io/client-go v0.21.1
 	k8s.io/klog/v2 v2.8.0
 	kmodules.xyz/client-go v0.0.0-20211107190155-5bb4090d2728
@@ -159,7 +161,6 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
 	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
@@ -207,7 +208,6 @@ require (
 	honnef.co/go/tools v0.0.1-2020.1.6 // indirect
 	k8s.io/api v0.21.1 // indirect
 	k8s.io/apiextensions-apiserver v0.21.1 // indirect
-	k8s.io/cli-runtime v0.21.1 // indirect
 	k8s.io/component-base v0.21.1 // indirect
 	k8s.io/kube-aggregator v0.21.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7 // indirect
