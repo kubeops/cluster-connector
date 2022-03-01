@@ -95,9 +95,9 @@ func handle(w http.ResponseWriter, r *http.Request, nc *nats.Conn) error {
 		p = path.Join(parts[2:]...)
 	}
 
-	//u := *r.URL
-	//u.Scheme = "https"
-	//u.Host = "127.0.0.2:8443"
+	// u := *r.URL
+	// u.Scheme = "https"
+	// u.Host = "127.0.0.2:8443"
 	u2 := &url.URL{
 		Scheme: svcScheme,
 		Host:   net.JoinHostPort(svcName, portStr),

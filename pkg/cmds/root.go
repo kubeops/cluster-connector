@@ -24,7 +24,7 @@ import (
 )
 
 func NewRootCmd() *cobra.Command {
-	var rootCmd = &cobra.Command{
+	rootCmd := &cobra.Command{
 		Use:               "cluster-connector [command]",
 		Short:             `Kubernetes Cluster Connector by AppsCode`,
 		DisableAutoGenTag: true,
