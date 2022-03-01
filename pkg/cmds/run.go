@@ -315,7 +315,7 @@ func respond(in []byte) (*transport.R, *http.Request, *http.Response, error) {
 		})
 	}
 
-	//req.URL = nil
+	// req.URL = nil
 	req.RequestURI = ""
 
 	httpClient := &http.Client{
