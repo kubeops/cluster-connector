@@ -54,9 +54,11 @@ func genLink(fs blobfs.Interface, bs *lib.BlobStore, u shared.User, req shared.L
 		return nil, err
 	}
 
-	l, err := link.Generate(bs, shared.UserValues{
-		User:  u,
-		Token: token.String(),
+	l, err := link.Generate(bs, shared.ChartValues{
+		User: shared.UserValues{
+			User:  u,
+			Token: token.String(),
+		},
 	})
 	if err != nil {
 		return nil, err
