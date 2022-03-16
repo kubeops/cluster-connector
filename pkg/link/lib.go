@@ -32,8 +32,8 @@ import (
 	"kubepack.dev/kubepack/pkg/lib"
 )
 
-func Generate(bs *lib.BlobStore, u shared.UserValues) (*shared.Link, error) {
-	order, err := NewOrder(shared.ConnectorChartURL, shared.ConnectorChartName, shared.ConnectorChartVersion, u)
+func Generate(bs *lib.BlobStore, cv shared.ChartValues) (*shared.Link, error) {
+	order, err := NewOrder(shared.ConnectorChartURL, shared.ConnectorChartName, shared.ConnectorChartVersion, cv)
 	if err != nil {
 		return nil, err
 	}
@@ -56,9 +56,9 @@ func NewBlobStore() (*lib.BlobStore, error) {
 	}, nil
 }
 
-func NewOrder(url, name, version string, u shared.UserValues) (*v1alpha1.Order, error) {
-	linkID := ulids.MustNew().String()
-	patch, err := generatePatch(linkID, u)
+func NewOrder(url, name, version string, cv shared.ChartValues) (*v1alpha1.Order, error) {
+	cv.LinkID = ulids.MustNew().String()
+	patch, err := generatePatch(cv)
 	if err != nil {
 		return nil, err
 	}
@@ -69,7 +69,7 @@ func NewOrder(url, name, version string, u shared.UserValues) (*v1alpha1.Order, 
 			Kind:       v1alpha1.ResourceKindOrder,
 		}, ObjectMeta: metav1.ObjectMeta{
 			Name:              name,
-			UID:               types.UID(linkID), // using ulids instead of UUID
+			UID:               types.UID(cv.LinkID), // using ulids instead of UUID
 			CreationTimestamp: metav1.NewTime(time.Now()),
 		},
 		Spec: v1alpha1.OrderSpec{
@@ -96,12 +96,7 @@ func NewOrder(url, name, version string, u shared.UserValues) (*v1alpha1.Order, 
 	}, nil
 }
 
-func generatePatch(linkID string, u shared.UserValues) ([]byte, error) {
-	cv := shared.ChartValues{
-		User:   u,
-		LinkID: linkID,
-	}
-
+func generatePatch(cv shared.ChartValues) ([]byte, error) {
 	data, err := json.Marshal(cv)
 	if err != nil {
 		return nil, err
