@@ -42,9 +42,16 @@ type UserValues struct {
 	Token string `json:"token"`
 }
 
+type ContainerImage struct {
+	Repository string `json:"repository"`
+	PullPolicy string `json:"pullPolicy"`
+	Tag        string `json:"tag"`
+}
+
 type ChartValues struct {
-	User   UserValues `json:"user"`
-	LinkID string     `json:"linkID"`
+	Image  ContainerImage `json:"image"`
+	User   UserValues     `json:"user"`
+	LinkID string         `json:"linkID"`
 }
 
 type LinkRequest struct {
