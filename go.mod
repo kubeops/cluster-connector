@@ -11,26 +11,27 @@ require (
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 	github.com/unrolled/render v1.4.1
-	go.bytebuilders.dev/audit v0.0.18
+	go.bytebuilders.dev/audit v0.0.19
 	go.bytebuilders.dev/license-verifier v0.9.7
 	go.bytebuilders.dev/license-verifier/kubernetes v0.9.7
 	go.wandrs.dev/binding v0.0.3-0.20210906071539-5c8dda42628b
 	go.wandrs.dev/inject v0.0.1
+	golang.org/x/text v0.3.7
 	gomodules.xyz/blobfs v0.1.10
 	gomodules.xyz/cert v1.4.1
 	gomodules.xyz/jsonpatch/v2 v2.2.0
 	gomodules.xyz/logs v0.0.6
 	gomodules.xyz/runtime v0.2.0
 	gomodules.xyz/ulids v0.1.0
-	gomodules.xyz/x v0.0.10
+	gomodules.xyz/x v0.0.13
 	k8s.io/apimachinery v0.21.1
 	k8s.io/apiserver v0.21.1
 	k8s.io/cli-runtime v0.21.1
 	k8s.io/client-go v0.21.1
 	k8s.io/klog/v2 v2.9.0
-	kmodules.xyz/client-go v0.0.0-20220203031013-1de48437aaf3
-	kmodules.xyz/custom-resources v0.0.0-20220126201139-be014631db0c
-	kubepack.dev/kubepack v0.3.9-0.20220201033352-575b50c5a43d
+	kmodules.xyz/client-go v0.0.0-20220317213815-2a6d5a5784f2
+	kmodules.xyz/custom-resources v0.0.0-20220317220154-7beb809b1f5e
+	kubepack.dev/kubepack v0.3.9-0.20220312063744-a4dcd72bbde2
 	sigs.k8s.io/controller-runtime v0.9.0
 )
 
@@ -116,7 +117,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jmoiron/sqlx v1.3.1 // indirect
 	github.com/jonboulle/clockwork v0.1.0 // indirect
-	github.com/json-iterator/go v1.1.11 // indirect
+	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/jstemmer/go-junit-report v0.9.1 // indirect
 	github.com/lann/builder v0.0.0-20180802200727-47ae307949d0 // indirect
 	github.com/lann/ps v0.0.0-20150810152359-62de8c46ede0 // indirect
@@ -136,7 +137,7 @@ require (
 	github.com/moby/spdystream v0.2.0 // indirect
 	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
@@ -183,7 +184,6 @@ require (
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
 	golang.org/x/sys v0.0.0-20211019181941-9d821ace8654 // indirect
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d // indirect
-	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	golang.org/x/tools v0.1.8 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
@@ -215,7 +215,7 @@ require (
 	k8s.io/utils v0.0.0-20210802155522-efc7438f0176 // indirect
 	kmodules.xyz/apply v0.0.0-20210503080849-eb226c295465 // indirect
 	kmodules.xyz/offshoot-api v0.0.0-20210829122105-6f4d481b0c61 // indirect
-	kmodules.xyz/resource-metadata v0.9.3 // indirect
+	kmodules.xyz/resource-metadata v0.10.0 // indirect
 	kmodules.xyz/resource-metrics v0.0.8 // indirect
 	kubepack.dev/lib-helm v0.3.2-0.20220207083916-19ae74825432 // indirect
 	kubepack.dev/preset v0.0.0-20220207074019-090909e7fcff // indirect
