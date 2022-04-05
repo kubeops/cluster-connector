@@ -346,8 +346,9 @@ lint: $(BUILD_DIRS)
 $(BUILD_DIRS):
 	@mkdir -p $@
 
-REGISTRY_SECRET ?=
-KUBE_NAMESPACE  ?= kubeops
+REGISTRY_SECRET   ?=
+IMAGE_PULL_POLICY ?= IfNotPresent
+KUBE_NAMESPACE    ?= kubeops
 
 ifeq ($(strip $(REGISTRY_SECRET)),)
 	IMAGE_PULL_SECRETS =
@@ -364,11 +365,11 @@ USER_TOKEN ?= $(BYTEBUILDERS_LICENSE_TOKEN)
 .PHONY: install
 install:
 	@cd ../installer; \
-	helm install cluster-connector charts/cluster-connector --wait \
+	helm upgrade -i cluster-connector charts/cluster-connector --wait \
 		--namespace=$(KUBE_NAMESPACE) --create-namespace \
-		--set image.repository=$(REGISTRY)/$(BIN) \
+		--set image.registry=$(REGISTRY) \
 		--set image.tag=$(TAG) \
-		--set imagePullPolicy=IfNotPresent \
+		--set imagePullPolicy=$(IMAGE_PULL_POLICY) \
 		--set nats.address=$(NATS_ADDR) \
 		--set user.name='$(USER_NAME)' \
 		--set user.email=$(USER_EMAIL) \
@@ -483,5 +484,8 @@ usage:
 .PHONY: push-to-kind
 push-to-kind: container
 	@echo "Loading docker image into kind cluster...."
-	@kind load docker-image $(REGISTRY)/cluster-connector:$(TAG)
+	@kind load docker-image $(IMAGE):$(TAG)
 	@echo "Image has been pushed successfully into kind cluster."
+
+.PHONY: deploy-to-kind
+deploy-to-kind: push-to-kind install
