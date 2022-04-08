@@ -43,8 +43,8 @@ type UserValues struct {
 }
 
 type ContainerImage struct {
+	Registry   string `json:"registry"`
 	Repository string `json:"repository"`
-	PullPolicy string `json:"pullPolicy"`
 	Tag        string `json:"tag"`
 }
 
