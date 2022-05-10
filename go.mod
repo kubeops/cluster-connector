@@ -7,7 +7,7 @@ require (
 	github.com/go-logr/logr v0.4.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/uuid v1.3.0
-	github.com/nats-io/nats.go v1.13.0
+	github.com/nats-io/nats.go v1.15.0
 	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
 	github.com/unrolled/render v1.4.1
@@ -23,15 +23,15 @@ require (
 	gomodules.xyz/logs v0.0.6
 	gomodules.xyz/runtime v0.2.0
 	gomodules.xyz/ulids v0.1.0
-	gomodules.xyz/x v0.0.13
+	gomodules.xyz/x v0.0.14
 	k8s.io/apimachinery v0.21.1
 	k8s.io/apiserver v0.21.1
 	k8s.io/cli-runtime v0.21.1
 	k8s.io/client-go v0.21.1
 	k8s.io/klog/v2 v2.9.0
-	kmodules.xyz/client-go v0.0.0-20220317213815-2a6d5a5784f2
-	kmodules.xyz/custom-resources v0.0.0-20220317220154-7beb809b1f5e
-	kubepack.dev/kubepack v0.3.9-0.20220312063744-a4dcd72bbde2
+	kmodules.xyz/client-go v0.0.0-20220427165208-36281a681909
+	kmodules.xyz/custom-resources v0.0.0-20220422215041-237eae1d7ddd
+	kubepack.dev/kubepack v0.3.9-0.20220508041304-2953fe06120b
 	sigs.k8s.io/controller-runtime v0.9.0
 )
 
@@ -188,9 +188,9 @@ require (
 	golang.org/x/tools v0.1.8 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gomodules.xyz/clock v0.0.0-20200817085942-06523dba733f // indirect
-	gomodules.xyz/encoding v0.0.2 // indirect
+	gomodules.xyz/encoding v0.0.4 // indirect
 	gomodules.xyz/flags v0.1.3 // indirect
-	gomodules.xyz/mergo v0.3.13-0.20210702100041-9d62ff8ece4d // indirect
+	gomodules.xyz/mergo v0.3.13-0.20220214162359-48efe39fd402 // indirect
 	gomodules.xyz/pointer v0.1.0 // indirect
 	gomodules.xyz/sets v0.2.1 // indirect
 	gomodules.xyz/sync v0.1.0 // indirect
@@ -214,11 +214,11 @@ require (
 	k8s.io/kubectl v0.21.1 // indirect
 	k8s.io/utils v0.0.0-20210802155522-efc7438f0176 // indirect
 	kmodules.xyz/apply v0.0.0-20210503080849-eb226c295465 // indirect
-	kmodules.xyz/offshoot-api v0.0.0-20210829122105-6f4d481b0c61 // indirect
-	kmodules.xyz/resource-metadata v0.10.0 // indirect
+	kmodules.xyz/offshoot-api v0.0.0-20220419215722-c7fc995091d3 // indirect
+	kmodules.xyz/resource-metadata v0.10.16-0.20220419233724-fbd1b7e25b05 // indirect
 	kmodules.xyz/resource-metrics v0.0.8 // indirect
-	kubepack.dev/lib-helm v0.3.2-0.20220207083916-19ae74825432 // indirect
-	kubepack.dev/preset v0.0.0-20220207074019-090909e7fcff // indirect
+	kubepack.dev/lib-helm v0.3.2-0.20220425222012-4279003342a5 // indirect
+	kubepack.dev/preset v0.0.0-20220318014008-5b564b7dc9e7 // indirect
 	sigs.k8s.io/application v0.8.2-0.20200306235134-f10d9ca8abd4 // indirect
 	sigs.k8s.io/cli-utils v0.26.1 // indirect
 	sigs.k8s.io/kustomize/api v0.8.8 // indirect
