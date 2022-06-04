@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"html/template"
 	"io"
 	"net/http"
@@ -101,17 +102,13 @@ func (w *response) JSON(status int, v interface{}) {
 
 func (w *response) JSONP(status int, callback string, v interface{}) {
 	if err := w.r.JSONP(w, status, callback, v); err != nil {
-		if log := middleware.GetLogEntry(w.R().Request()); log != nil {
-			log.Panic(err.Error(), nil)
-		}
+		http.Error(w, fmt.Sprintf("Render failed, reason: %v", err), http.StatusInternalServerError)
 	}
 }
 
 func (w *response) Text(status int, v string) {
 	if err := w.r.Text(w, status, v); err != nil {
-		if log := middleware.GetLogEntry(w.R().Request()); log != nil {
-			log.Panic(err.Error(), nil)
-		}
+		http.Error(w, fmt.Sprintf("Render failed, reason: %v", err), http.StatusInternalServerError)
 	}
 }
 
@@ -136,7 +133,7 @@ func (w *response) Written() bool {
 	if ww, ok := w.ResponseWriter.(middleware.WrapResponseWriter); ok {
 		return ww.Status() > 0
 	}
-	panic("chi: unsupported method, r.Use(middleware.Logger) to implement")
+	panic("unsupported method, r.Use(middleware.Logger) to implement")
 }
 
 // Status returns the HTTP status of the request, or 0 if one has not
@@ -145,7 +142,7 @@ func (w *response) Status() int {
 	if ww, ok := w.ResponseWriter.(middleware.WrapResponseWriter); ok {
 		return ww.Status()
 	}
-	panic("chi: unsupported method, r.Use(middleware.Logger) to implement")
+	panic("unsupported method, r.Use(middleware.Logger) to implement")
 }
 
 // BytesWritten returns the total number of bytes sent to the client.
@@ -153,5 +150,5 @@ func (w *response) BytesWritten() int {
 	if ww, ok := w.ResponseWriter.(middleware.WrapResponseWriter); ok {
 		return ww.BytesWritten()
 	}
-	panic("chi: unsupported method, r.Use(middleware.Logger) to implement")
+	panic("unsupported method, r.Use(middleware.Logger) to implement")
 }
