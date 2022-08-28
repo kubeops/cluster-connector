@@ -19,3 +19,21 @@ package v1alpha1
 func (l License) DisableAnalytics() bool {
 	return len(l.FeatureFlags) > 0 && l.FeatureFlags["DisableAnalytics"] == "true"
 }
+
+func (i License) Less(j License) bool {
+	if i.NotBefore == nil {
+		return true
+	} else if j.NotBefore == nil {
+		return false
+	}
+	if !i.NotBefore.Equal(j.NotBefore) {
+		return i.NotBefore.Before(j.NotBefore)
+	}
+
+	if i.NotAfter == nil {
+		return true
+	} else if j.NotAfter == nil {
+		return false
+	}
+	return i.NotAfter.Before(j.NotAfter)
+}
