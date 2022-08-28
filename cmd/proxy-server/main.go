@@ -158,7 +158,7 @@ func getNatsClient() (*nats.Conn, error) {
 		return nil, err
 	}
 
-	ncfg, err := auditlib.NewNatsConfig(cid, licenseFile)
+	ncfg, err := auditlib.NewNatsConfig(config, cid, licenseFile)
 	if err != nil {
 		return nil, err
 	}

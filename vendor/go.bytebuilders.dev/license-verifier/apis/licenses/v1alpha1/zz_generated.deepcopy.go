@@ -29,6 +29,11 @@ import (
 func (in *License) DeepCopyInto(out *License) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
+	if in.Data != nil {
+		in, out := &in.Data, &out.Data
+		*out = make([]byte, len(*in))
+		copy(*out, *in)
+	}
 	if in.Features != nil {
 		in, out := &in.Features, &out.Features
 		*out = make([]string, len(*in))

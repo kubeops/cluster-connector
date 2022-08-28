@@ -11,9 +11,9 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/spf13/pflag v1.0.5
 	github.com/unrolled/render v1.4.1
-	go.bytebuilders.dev/audit v0.0.21
-	go.bytebuilders.dev/license-verifier v0.9.7
-	go.bytebuilders.dev/license-verifier/kubernetes v0.9.7
+	go.bytebuilders.dev/audit v0.0.23
+	go.bytebuilders.dev/license-verifier v0.11.1-0.20220827213833-8fc2de2a63b5
+	go.bytebuilders.dev/license-verifier/kubernetes v0.11.1-0.20220827213833-8fc2de2a63b5
 	go.wandrs.dev/binding v0.0.3-0.20220318024734-9a147576d26c
 	go.wandrs.dev/inject v0.0.1
 	golang.org/x/text v0.3.7
@@ -24,15 +24,15 @@ require (
 	gomodules.xyz/runtime v0.3.0
 	gomodules.xyz/ulids v0.1.0
 	gomodules.xyz/x v0.0.14
-	k8s.io/apimachinery v0.24.1
-	k8s.io/apiserver v0.24.1
+	k8s.io/apimachinery v0.24.3
+	k8s.io/apiserver v0.24.2
 	k8s.io/cli-runtime v0.24.1
-	k8s.io/client-go v0.24.1
-	k8s.io/klog/v2 v2.60.1
-	kmodules.xyz/client-go v0.24.0
-	kmodules.xyz/custom-resources v0.24.0
-	kubepack.dev/kubepack v0.4.0
-	sigs.k8s.io/controller-runtime v0.12.1
+	k8s.io/client-go v0.24.3
+	k8s.io/klog/v2 v2.70.1
+	kmodules.xyz/client-go v0.24.8
+	kmodules.xyz/custom-resources v0.24.1
+	kubepack.dev/kubepack v0.4.1
+	sigs.k8s.io/controller-runtime v0.12.3
 )
 
 require (
@@ -81,8 +81,8 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5 // indirect
-	github.com/cloudevents/sdk-go/v2 v2.5.0 // indirect
-	github.com/containerd/containerd v1.6.3 // indirect
+	github.com/cloudevents/sdk-go/v2 v2.10.1 // indirect
+	github.com/containerd/containerd v1.6.6 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.1 // indirect
 	github.com/cyphar/filepath-securejoin v0.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
@@ -96,6 +96,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1-0.20220316001817-d5090ed65664 // indirect
 	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
 	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
+	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d // indirect
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
@@ -141,12 +142,13 @@ require (
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/lib/pq v1.10.4 // indirect
 	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
-	github.com/mailru/easyjson v0.7.6 // indirect
+	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-ieproxy v0.0.3 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.2-0.20181231171920-c182affec369 // indirect
+	github.com/minio/highwayhash v1.0.2 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
@@ -159,6 +161,7 @@ require (
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
+	github.com/nats-io/jwt/v2 v2.2.1-0.20220330180145-442af02fd36a // indirect
 	github.com/nats-io/nkeys v0.3.0 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/oklog/ulid/v2 v2.0.2 // indirect
@@ -167,9 +170,9 @@ require (
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/prometheus/client_golang v1.12.1 // indirect
+	github.com/prometheus/client_golang v1.12.2 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
-	github.com/prometheus/common v0.32.1 // indirect
+	github.com/prometheus/common v0.34.0 // indirect
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/rubenv/sql-migrate v1.1.1 // indirect
 	github.com/russross/blackfriday v1.5.2 // indirect
@@ -185,6 +188,7 @@ require (
 	github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca // indirect
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
+	go.bytebuilders.dev/license-proxyserver v0.0.2-0.20220802031002-926d24a28f5d // indirect
 	go.opencensus.io v0.23.0 // indirect
 	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
@@ -218,18 +222,18 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0 // indirect
 	helm.sh/helm/v3 v3.0.0-00010101000000-000000000000 // indirect
-	k8s.io/api v0.24.1 // indirect
-	k8s.io/apiextensions-apiserver v0.24.1 // indirect
-	k8s.io/component-base v0.24.1 // indirect
+	k8s.io/api v0.24.3 // indirect
+	k8s.io/apiextensions-apiserver v0.24.2 // indirect
+	k8s.io/component-base v0.24.2 // indirect
 	k8s.io/kube-aggregator v0.24.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220413171646-5e7f5fdc6da6 // indirect
 	k8s.io/kubectl v0.24.1 // indirect
 	k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9 // indirect
 	kmodules.xyz/apply v0.24.1 // indirect
 	kmodules.xyz/offshoot-api v0.24.1 // indirect
-	kmodules.xyz/resource-metadata v0.11.0 // indirect
+	kmodules.xyz/resource-metadata v0.12.5 // indirect
 	kmodules.xyz/resource-metrics v0.10.1 // indirect
-	kubepack.dev/lib-helm v0.3.2-0.20220604063230-32de2acacbfb // indirect
+	kubepack.dev/lib-helm v0.4.0 // indirect
 	kubepack.dev/preset v0.0.1 // indirect
 	oras.land/oras-go v1.1.0 // indirect
 	sigs.k8s.io/application v0.0.0-00010101000000-000000000000 // indirect
