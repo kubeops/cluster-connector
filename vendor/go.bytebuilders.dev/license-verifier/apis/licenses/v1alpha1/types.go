@@ -56,3 +56,9 @@ const (
 	LicenseInvalid  LicenseStatus = "invalid"
 	LicenseCanceled LicenseStatus = "canceled"
 )
+
+type Contract struct {
+	ID              string      `json:"id"`
+	StartTimestamp  metav1.Time `json:"startTimestamp"`
+	ExpiryTimestamp metav1.Time `json:"expiryTimestamp"`
+}

@@ -89,6 +89,14 @@ func NewLicenseEnforcer(config *rest.Config, licenseFile string) (*LicenseEnforc
 	return &le, nil
 }
 
+func MustLicenseEnforcer(config *rest.Config, licenseFile string) *LicenseEnforcer {
+	le, err := NewLicenseEnforcer(config, licenseFile)
+	if err != nil {
+		panic("failed to instantiate license enforcer, err:" + err.Error())
+	}
+	return le
+}
+
 func getLicense(cfg *rest.Config, licenseFile string) func() ([]byte, error) {
 	return func() ([]byte, error) {
 		licenseBytes, err := ioutil.ReadFile(licenseFile)
