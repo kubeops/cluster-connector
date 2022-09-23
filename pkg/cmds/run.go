@@ -23,7 +23,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -119,7 +118,7 @@ func NewCmdRun() *cobra.Command {
 					setupLog.Error(err, "failed to create license api client")
 					os.Exit(1)
 				}
-				l, err := lc.AcquireLicense(info.Features())
+				l, _, err := lc.AcquireLicense(info.Features())
 				if err != nil {
 					setupLog.Error(err, "failed to acquire license")
 					os.Exit(1)
@@ -364,7 +363,7 @@ func (cb *callback) Start(context.Context) error {
 	}
 	defer resp.Body.Close()
 
-	_, err = io.Copy(ioutil.Discard, resp.Body)
+	_, err = io.Copy(io.Discard, resp.Body)
 	if err != nil {
 		return err
 	}

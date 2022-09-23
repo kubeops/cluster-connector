@@ -25,6 +25,7 @@ import (
 	"path"
 
 	"go.bytebuilders.dev/license-verifier/apis/licenses"
+	"go.bytebuilders.dev/license-verifier/apis/licenses/v1alpha1"
 	"go.bytebuilders.dev/license-verifier/info"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -55,7 +56,7 @@ func NewClient(baseURL, token, clusterUID string) (*Client, error) {
 	return &c, nil
 }
 
-func (c *Client) AcquireLicense(features []string) ([]byte, error) {
+func (c *Client) AcquireLicense(features []string) ([]byte, *v1alpha1.Contract, error) {
 	opts := struct {
 		Cluster  string   `json:"cluster"`
 		Features []string `json:"features"`
@@ -65,12 +66,12 @@ func (c *Client) AcquireLicense(features []string) ([]byte, error) {
 	}
 	data, err := json.Marshal(opts)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	req, err := http.NewRequest(http.MethodPost, c.url, bytes.NewReader(data))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	// add authorization header to the req
 	if c.token != "" {
@@ -78,34 +79,34 @@ func (c *Client) AcquireLicense(features []string) ([]byte, error) {
 	}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer resp.Body.Close()
 
-	var buf bytes.Buffer
-	_, err = io.Copy(&buf, resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, apierrors.NewGenericServerResponse(
+		return nil, nil, apierrors.NewGenericServerResponse(
 			resp.StatusCode,
 			http.MethodPost,
 			schema.GroupResource{Group: licenses.GroupName, Resource: "License"},
 			"",
-			buf.String(),
+			string(body),
 			0,
 			false,
 		)
 	}
 
 	lc := struct {
-		License []byte `json:"license"`
+		Contract *v1alpha1.Contract `json:"contract,omitempty"`
+		License  []byte             `json:"license"`
 	}{}
-	err = json.Unmarshal(buf.Bytes(), &lc)
+	err = json.Unmarshal(body, &lc)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return lc.License, nil
+	return lc.License, lc.Contract, nil
 }

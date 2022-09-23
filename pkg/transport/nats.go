@@ -63,6 +63,7 @@ const defaultTimeout = 30 * time.Second // from http.DefaultTransport
 // timeout returns the minimum of:
 //   - Timeout
 //   - the context's deadline-now
+//
 // Or defaultTimeout, if none of Timeout, or context's deadline-now is set.
 func (rt *NatsTransport) timeout(ctx context.Context, now time.Time) time.Duration {
 	timeout := rt.Timeout
