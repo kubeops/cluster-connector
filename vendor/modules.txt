@@ -727,11 +727,7 @@ go.bytebuilders.dev/license-proxyserver/client/clientset/versioned/typed/proxyse
 go.bytebuilders.dev/license-verifier
 go.bytebuilders.dev/license-verifier/apis/licenses
 go.bytebuilders.dev/license-verifier/apis/licenses/v1alpha1
-go.bytebuilders.dev/license-verifier/client
 go.bytebuilders.dev/license-verifier/info
-# go.bytebuilders.dev/license-verifier/kubernetes v0.12.0
-## explicit; go 1.18
-go.bytebuilders.dev/license-verifier/kubernetes
 # go.opencensus.io v0.23.0 => go.opencensus.io v0.23.0
 ## explicit; go 1.13
 go.opencensus.io
@@ -1263,7 +1259,6 @@ k8s.io/apiserver/pkg/endpoints/request
 k8s.io/apiserver/pkg/endpoints/responsewriter
 k8s.io/apiserver/pkg/features
 k8s.io/apiserver/pkg/registry/rest
-k8s.io/apiserver/pkg/server/mux
 k8s.io/apiserver/pkg/storage
 k8s.io/apiserver/pkg/storage/names
 k8s.io/apiserver/pkg/util/feature
@@ -1597,15 +1592,6 @@ k8s.io/klog/v2/internal/dbg
 k8s.io/klog/v2/internal/serialize
 k8s.io/klog/v2/internal/severity
 k8s.io/klog/v2/klogr
-# k8s.io/kube-aggregator v0.25.1
-## explicit; go 1.19
-k8s.io/kube-aggregator/pkg/apis/apiregistration
-k8s.io/kube-aggregator/pkg/apis/apiregistration/v1
-k8s.io/kube-aggregator/pkg/apis/apiregistration/v1beta1
-k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset
-k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/scheme
-k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1
-k8s.io/kube-aggregator/pkg/client/clientset_generated/clientset/typed/apiregistration/v1beta1
 # k8s.io/kube-openapi v0.0.0-20220803164354-a70c9af30aea
 ## explicit; go 1.18
 k8s.io/kube-openapi/pkg/builder3/util
@@ -1677,9 +1663,7 @@ kmodules.xyz/client-go/apiextensions
 kmodules.xyz/client-go/apiextensions/v1
 kmodules.xyz/client-go/client
 kmodules.xyz/client-go/client/apiutil
-kmodules.xyz/client-go/core/v1
 kmodules.xyz/client-go/discovery
-kmodules.xyz/client-go/dynamic
 kmodules.xyz/client-go/meta
 kmodules.xyz/client-go/tools/clusterid
 kmodules.xyz/client-go/tools/parser
