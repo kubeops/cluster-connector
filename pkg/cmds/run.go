@@ -35,10 +35,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/nats-io/nats.go"
 	"github.com/spf13/cobra"
-	auditlib "go.bytebuilders.dev/audit/lib"
-	licenseclient "go.bytebuilders.dev/license-verifier/client"
 	"go.bytebuilders.dev/license-verifier/info"
-	license "go.bytebuilders.dev/license-verifier/kubernetes"
 	v "gomodules.xyz/x/version"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
@@ -47,7 +44,6 @@ import (
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
 	cu "kmodules.xyz/client-go/client"
-	"kmodules.xyz/client-go/discovery"
 	"kmodules.xyz/client-go/meta"
 	"kmodules.xyz/client-go/tools/clusterid"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -61,13 +57,11 @@ var (
 
 func NewCmdRun() *cobra.Command {
 	var (
-		linkID      string
-		baseURL     string
-		token       string
-		licenseFile = "/tmp/license.txt"
-		metricsAddr string
-		natsAddr    string
-		probeAddr   string
+		linkID       string
+		metricsAddr  string
+		natsAddr     string
+		natsCredFile string
+		probeAddr    string
 	)
 	cmd := &cobra.Command{
 		Use:               "run",
@@ -76,16 +70,9 @@ func NewCmdRun() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			klog.Infof("Starting binary version %s+%s ...", v.Version.Version, v.Version.CommitHash)
 
-			if info.SkipLicenseVerification() {
-				if natsAddr == "" && token == "" {
-					setupLog.Info("set either --nats-addr or --token flag")
-					os.Exit(1)
-				}
-			} else {
-				if token == "" {
-					setupLog.Info("missing license server token")
-					os.Exit(1)
-				}
+			if natsAddr == "" || natsCredFile == "" {
+				setupLog.Info("set --nats-addr and --nats-credential-file flag")
+				os.Exit(1)
 			}
 
 			ctrl.SetLogger(klogr.New())
@@ -103,7 +90,6 @@ func NewCmdRun() *cobra.Command {
 				setupLog.Error(err, "unable to start manager")
 				os.Exit(1)
 			}
-			cfg := mgr.GetConfig()
 
 			cid, err := cu.ClusterUID(mgr.GetAPIReader())
 			if err != nil {
@@ -111,53 +97,10 @@ func NewCmdRun() *cobra.Command {
 				os.Exit(1)
 			}
 
-			var nc *nats.Conn
-			if token != "" {
-				lc, err := licenseclient.NewClient(baseURL, token, cid)
-				if err != nil {
-					setupLog.Error(err, "failed to create license api client")
-					os.Exit(1)
-				}
-				l, _, err := lc.AcquireLicense(info.Features())
-				if err != nil {
-					setupLog.Error(err, "failed to acquire license")
-					os.Exit(1)
-				}
-				err = os.WriteFile(licenseFile, l, 0o644)
-				if err != nil {
-					setupLog.Error(err, "failed to write license", "file", licenseFile)
-					os.Exit(1)
-				}
-
-				// audit event publisher
-				mapper := discovery.NewResourceMapper(mgr.GetRESTMapper())
-				fn := auditlib.BillingEventCreator{
-					Mapper: mapper,
-				}
-				auditor := auditlib.NewResilientEventPublisher(func() (*auditlib.NatsConfig, error) {
-					return auditlib.NewNatsConfig(cfg, cid, licenseFile)
-				}, mapper, fn.CreateEvent)
-
-				// Start periodic license verification
-				//nolint:errcheck
-				go license.VerifyLicensePeriodically(mgr.GetConfig(), licenseFile, ctx.Done())
-
-				if err := auditor.SetupSiteInfoPublisherWithManager(mgr); err != nil {
-					setupLog.Error(err, "unable to setup site lic publisher")
-					os.Exit(1)
-				}
-
-				nc, err = auditor.NatsClient()
-				if err != nil {
-					setupLog.Error(err, "failed to connect to nats")
-					os.Exit(1)
-				}
-			} else {
-				nc, err = nats.Connect(natsAddr)
-				if err != nil {
-					setupLog.Error(err, "failed to connect to nats")
-					os.Exit(1)
-				}
+			nc, err := transport.NewConnection(natsAddr, natsCredFile)
+			if err != nil {
+				setupLog.Error(err, "failed to connect to nats")
+				os.Exit(1)
 			}
 
 			err = addSubscribers(nc, cid)
@@ -200,11 +143,9 @@ func NewCmdRun() *cobra.Command {
 	meta.AddLabelBlacklistFlag(cmd.Flags())
 	clusterid.AddFlags(cmd.Flags())
 	cmd.Flags().StringVar(&linkID, "link-id", linkID, "Link id")
-	cmd.Flags().StringVar(&baseURL, "baseURL", baseURL, "License server base url")
-	cmd.Flags().StringVar(&token, "token", token, "License server token")
-	cmd.Flags().StringVar(&licenseFile, "license-file", licenseFile, "Path to file where license will be saved")
 	cmd.Flags().StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	cmd.Flags().StringVar(&natsAddr, "nats-addr", "", "The NATS server address (only used for development).")
+	cmd.Flags().StringVar(&natsCredFile, "nats-credential-file", natsCredFile, "PATH to NATS credential file")
 	cmd.Flags().StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 
 	return cmd

@@ -13,7 +13,6 @@ require (
 	github.com/unrolled/render v1.5.0
 	go.bytebuilders.dev/audit v0.0.24
 	go.bytebuilders.dev/license-verifier v0.12.0
-	go.bytebuilders.dev/license-verifier/kubernetes v0.12.0
 	go.wandrs.dev/binding v0.0.3-0.20220318024734-9a147576d26c
 	go.wandrs.dev/inject v0.0.1
 	golang.org/x/text v0.3.7
@@ -223,7 +222,6 @@ require (
 	k8s.io/api v0.25.2 // indirect
 	k8s.io/apiextensions-apiserver v0.25.2 // indirect
 	k8s.io/component-base v0.25.2 // indirect
-	k8s.io/kube-aggregator v0.25.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803164354-a70c9af30aea // indirect
 	k8s.io/kubectl v0.25.0 // indirect
 	k8s.io/utils v0.0.0-20220823124924-e9cbc92d1a73 // indirect

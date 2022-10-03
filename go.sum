@@ -991,8 +991,6 @@ go.bytebuilders.dev/license-proxyserver v0.0.2-0.20220917052300-e49b09065bec h1:
 go.bytebuilders.dev/license-proxyserver v0.0.2-0.20220917052300-e49b09065bec/go.mod h1:x7fp0T3Vsjdg/HA1cSBkIzmXNoQgj/y5DuMA+AMWX+Y=
 go.bytebuilders.dev/license-verifier v0.12.0 h1:HdgYKDe+lzjvTkkhlhrBtm5ORUXIKg8obst107OYVd4=
 go.bytebuilders.dev/license-verifier v0.12.0/go.mod h1:47HPt3RVp9gsujYpOeXi28IsTV5lilZ+EOpuhz/DIJM=
-go.bytebuilders.dev/license-verifier/kubernetes v0.12.0 h1:YJ/JWjeJgDOHzgI/RYMn60x+R7KpZ+3Nu8BHJLghYc8=
-go.bytebuilders.dev/license-verifier/kubernetes v0.12.0/go.mod h1:XJUtMI5o0QQyaor1SAqL/2YTYU9LxYM6/Q8X8o/750w=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/etcd/api/v3 v3.5.0/go.mod h1:cbVKeC6lCfl7j/8jBhAK6aIYO9XOjdptoxU/nLQcPvs=
 go.etcd.io/etcd/client/pkg/v3 v3.5.0/go.mod h1:IJHfcCEKxYu1Os13ZdwCwIUTUVGYTSAM3YSwc9/Ac1g=
@@ -1674,8 +1672,6 @@ k8s.io/klog/v2 v2.0.0/go.mod h1:PBfzABfn139FHAV07az/IF9Wp1bkk3vpT2XSJ76fSDE=
 k8s.io/klog/v2 v2.8.0/go.mod h1:hy9LJ/NvuK+iVyP4Ehqva4HxZG/oXyIS3n3Jmire4Ec=
 k8s.io/klog/v2 v2.80.1 h1:atnLQ121W371wYYFawwYx1aEY2eUfs4l3J72wtgAwV4=
 k8s.io/klog/v2 v2.80.1/go.mod h1:y1WjHnz7Dj687irZUWR/WLkLc5N1YHtjLdmgWjndZn0=
-k8s.io/kube-aggregator v0.25.1 h1:XJajtusVLQ13kRPFL1xeQ2cHIzGTuXgOet1lMRF89+o=
-k8s.io/kube-aggregator v0.25.1/go.mod h1:sIw78EfLuJBA8c0csl+EXY7ni9asm9g18kEYePOW64w=
 k8s.io/kube-openapi v0.0.0-20210305001622-591a79e4bda7/go.mod h1:wXW5VT87nVfh/iLV8FpR2uDvrFyomxbtb1KivDbvPTE=
 k8s.io/kube-openapi v0.0.0-20220803164354-a70c9af30aea h1:3QOH5+2fGsY8e1qf+GIFpg+zw/JGNrgyZRQR7/m6uWg=
 k8s.io/kube-openapi v0.0.0-20220803164354-a70c9af30aea/go.mod h1:C/N6wCaBHeBHkHUesQOQy2/MZqGgMAFPqGsGQLdbZBU=
