@@ -31,6 +31,7 @@ require (
 	k8s.io/klog/v2 v2.80.1
 	kmodules.xyz/client-go v0.25.6
 	kmodules.xyz/custom-resources v0.25.0
+	kubeops.dev/installer v0.0.0-20221003235025-53e6272b8b55
 	kubepack.dev/kubepack v0.5.0
 	sigs.k8s.io/controller-runtime v0.13.0
 )

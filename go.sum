@@ -421,6 +421,7 @@ github.com/go-sql-driver/mysql v1.5.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LB
 github.com/go-sql-driver/mysql v1.6.0 h1:BCTh4TKNUYmOmMUcQ3IipzF5prigylS7XXjEkfCHuOE=
 github.com/go-sql-driver/mysql v1.6.0/go.mod h1:DCzpHaOWr8IXmIStZouvnhqoel9Qv2LBy8hT2VhHyBg=
 github.com/go-stack/stack v1.8.0/go.mod h1:v0f6uXyyMGvRgIKkXu+yp6POWl0qKG85gN/melR3HDY=
+github.com/gobeam/stringy v0.0.5 h1:TvxQGSAqr/qF0SBVxa8Q67WWIo7bCWS0bM101WOd52g=
 github.com/gobuffalo/flect v0.3.0 h1:erfPWM+K1rFNIQeRPdeEXxo8yFr/PO17lhRnS8FUrtk=
 github.com/gobuffalo/flect v0.3.0/go.mod h1:5pf3aGnsvqvCj50AVni7mJJF8ICxGZ8HomberC3pXLE=
 github.com/gobuffalo/logger v1.0.6 h1:nnZNpxYo0zx+Aj9RfMPBm+x9zAU2OayFh/xrAWi34HU=
@@ -1689,6 +1690,9 @@ kmodules.xyz/resource-metadata v0.13.0 h1:rwRnJuhDXvRlUop/gwILwljRezzhdU/i760bq2
 kmodules.xyz/resource-metadata v0.13.0/go.mod h1:dHFJGeJjPpeyhXL7hdgb81NaQa/AeLAkhy4kSpnpPzE=
 kmodules.xyz/resource-metrics v0.25.0 h1:wj3npVZZQr+Yysg/XdGn4LdT5kQizWeO0zq7QlSVx50=
 kmodules.xyz/resource-metrics v0.25.0/go.mod h1:4a49npnu73c9LGDWHWQsPWoXWXU9rpCcknoH1+HHesI=
+kmodules.xyz/schema-checker v0.4.1 h1:V5UEjR6UMAXf307lTgw+9rDRfHLTNA8g/q9DngqYI9M=
+kubeops.dev/installer v0.0.0-20221003235025-53e6272b8b55 h1:/82Tsf2bhDd0wmOrlULMotW7mYg6Q9/NviqKGocruSg=
+kubeops.dev/installer v0.0.0-20221003235025-53e6272b8b55/go.mod h1:vD7WIZbLlbtvjkhjXvdc4AMu9RISGpz03uQPEsQinrs=
 kubepack.dev/kubepack v0.5.0 h1:GhzMNiA9wkSy0fNtA+ycLE5I714utkyX/Yq/2zW+ubE=
 kubepack.dev/kubepack v0.5.0/go.mod h1:EReV4vmAVWMEhEmwP5C8i/Y20uXVQzxTVK0PGqopMw4=
 kubepack.dev/lib-helm v0.4.1 h1:JsLF5jGAf9Qke+LgGxS6cJz1lAcPfHRsXp03EB+InCs=
