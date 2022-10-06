@@ -18,15 +18,14 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"time"
 
 	"kubeops.dev/cluster-connector/pkg/link"
 	restproxy "kubeops.dev/cluster-connector/pkg/rest"
 	"kubeops.dev/cluster-connector/pkg/shared"
+	kubeops "kubeops.dev/installer/apis/installer/v1alpha1"
 
-	"github.com/google/uuid"
 	"github.com/nats-io/nats.go"
 	"gomodules.xyz/blobfs"
 	"k8s.io/client-go/kubernetes"
@@ -37,28 +36,11 @@ import (
 var links = map[string]shared.LinkData{}
 
 func genLink(fs blobfs.Interface, bs *lib.BlobStore, u shared.User, req shared.LinkRequest) (*shared.Link, error) {
-	domain := shared.Domain(u.Email)
 	now := time.Now()
-	timestamp := []byte(now.UTC().Format(time.RFC3339))
-	if exists, err := fs.Exists(context.TODO(), shared.EmailVerifiedPath(domain, u.Email)); err == nil && !exists {
-		err = fs.WriteFile(context.TODO(), shared.EmailVerifiedPath(domain, u.Email), timestamp)
-		if err != nil {
-			return nil, err
-		}
-	}
 
-	token := uuid.New()
-
-	err := fs.WriteFile(context.TODO(), shared.EmailTokenPath(domain, u.Email, token.String()), timestamp)
-	if err != nil {
-		return nil, err
-	}
-
-	l, err := link.Generate(bs, shared.ChartValues{
-		User: shared.UserValues{
-			User:  u,
-			Token: token.String(),
-		},
+	l, err := link.Generate(bs, kubeops.ClusterConnectorSpec{
+		LinkID: "",
+		Nats:   kubeops.ClusterConnectorNats{},
 	})
 	if err != nil {
 		return nil, err
@@ -66,10 +48,8 @@ func genLink(fs blobfs.Interface, bs *lib.BlobStore, u shared.User, req shared.L
 
 	links[l.LinkID] = shared.LinkData{
 		LinkID:     l.LinkID,
-		Token:      token.String(),
 		ClusterID:  "", // unknown
 		NotAfter:   now.Add(shared.ConnectorLinkLifetime),
-		User:       u,
 		KubeConfig: req.KubeConfig,
 	}
 	// save l info in the database
@@ -82,7 +62,6 @@ func handleCallback(fs blobfs.Interface, nc *nats.Conn, in shared.CallbackReques
 		return fmt.Errorf("unknown l id %q", in.LinkID)
 	}
 	now := time.Now()
-	domain := shared.Domain(l.User.Email)
 	if now.After(l.NotAfter) {
 		return fmt.Errorf("l %s expired %v ago", l.LinkID, now.Sub(l.NotAfter))
 	}
@@ -112,14 +91,6 @@ func handleCallback(fs blobfs.Interface, nc *nats.Conn, in shared.CallbackReques
 	l.ClusterID = in.ClusterID
 
 	// store in database cluster_id, kubeconfig for this user
-
-	// delete token
-	if exists, err := fs.Exists(context.TODO(), shared.EmailTokenPath(domain, l.User.Email, l.Token)); err == nil && exists {
-		err := fs.DeleteFile(context.TODO(), shared.EmailTokenPath(domain, l.User.Email, l.Token))
-		if err != nil {
-			return err
-		}
-	}
 
 	// mark l as used ?
 	// not needed, since it expires after 10 mins
