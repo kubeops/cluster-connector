@@ -25,10 +25,8 @@ type Link struct {
 
 type LinkData struct {
 	LinkID     string
-	Token      string
 	ClusterID  string
 	NotAfter   time.Time
-	User       User
 	KubeConfig string
 }
 
