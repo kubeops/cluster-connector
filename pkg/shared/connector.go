@@ -18,9 +18,11 @@ package shared
 
 import (
 	"fmt"
+	"net/url"
 	"path"
 	"time"
 
+	"github.com/pkg/errors"
 	"go.bytebuilders.dev/license-verifier/info"
 )
 
@@ -62,8 +64,17 @@ func ConnectorLinkAPIEndpoint() string {
 	return u.String()
 }
 
-func ConnectorCallbackEndpoint() string {
-	u := info.APIServerAddress()
+func ConnectorCallbackEndpoint(baseURL string) string {
+	var u *url.URL
+	if baseURL != "" {
+		var err error
+		u, err = url.Parse(baseURL)
+		if err != nil {
+			panic(errors.Wrapf(err, "invalid url: %s", baseURL))
+		}
+	} else {
+		u = info.APIServerAddress()
+	}
 	u.Path = path.Join(u.Path, ConnectorAPIPathPrefix, ConnectorCallbackAPIPath)
 	return u.String()
 }

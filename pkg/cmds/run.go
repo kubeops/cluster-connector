@@ -57,6 +57,7 @@ var (
 
 func NewCmdRun() *cobra.Command {
 	var (
+		baseURL      string
 		linkID       string
 		metricsAddr  string
 		natsAddr     string
@@ -119,6 +120,7 @@ func NewCmdRun() *cobra.Command {
 			}
 
 			if err := mgr.Add(&callback{
+				baseURL: baseURL,
 				req: shared.CallbackRequest{
 					LinkID:      linkID,
 					ClusterID:   cid,
@@ -142,6 +144,7 @@ func NewCmdRun() *cobra.Command {
 
 	meta.AddLabelBlacklistFlag(cmd.Flags())
 	clusterid.AddFlags(cmd.Flags())
+	cmd.Flags().StringVar(&baseURL, "baseURL", baseURL, "License server base url")
 	cmd.Flags().StringVar(&linkID, "link-id", linkID, "Link id")
 	cmd.Flags().StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	cmd.Flags().StringVar(&natsAddr, "nats-addr", "", "The NATS server address (only used for development).")
@@ -283,8 +286,9 @@ func respond(in []byte) (*transport.R, *http.Request, *http.Response, error) {
 }
 
 type callback struct {
-	req shared.CallbackRequest
-	log logr.Logger
+	baseURL string
+	req     shared.CallbackRequest
+	log     logr.Logger
 }
 
 func (cb *callback) InjectLogger(l logr.Logger) error {
@@ -298,7 +302,7 @@ func (cb *callback) Start(context.Context) error {
 		return err
 	}
 
-	resp, err := http.Post(shared.ConnectorCallbackEndpoint(), "application/json", bytes.NewReader(data))
+	resp, err := http.Post(shared.ConnectorCallbackEndpoint(cb.baseURL), "application/json", bytes.NewReader(data))
 	if err != nil {
 		return err
 	}
