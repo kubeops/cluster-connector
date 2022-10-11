@@ -35,7 +35,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/nats-io/nats.go"
 	"github.com/spf13/cobra"
-	"go.bytebuilders.dev/license-verifier/info"
 	v "gomodules.xyz/x/version"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
@@ -122,9 +121,8 @@ func NewCmdRun() *cobra.Command {
 			if err := mgr.Add(&callback{
 				baseURL: baseURL,
 				req: shared.CallbackRequest{
-					LinkID:      linkID,
-					ClusterID:   cid,
-					ProductName: info.ProductName,
+					LinkID:    linkID,
+					ClusterID: cid,
 				},
 			}); err != nil {
 				setupLog.Error(err, "failed to add link callback")
