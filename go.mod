@@ -8,6 +8,8 @@ require (
 	github.com/gogo/protobuf v1.3.2
 	github.com/google/uuid v1.3.0
 	github.com/nats-io/nats.go v1.17.0
+	github.com/pkg/errors v0.9.1
+	github.com/rs/xid v1.2.1
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
 	github.com/unrolled/render v1.5.0
@@ -21,7 +23,6 @@ require (
 	gomodules.xyz/jsonpatch/v2 v2.2.0
 	gomodules.xyz/logs v0.0.6
 	gomodules.xyz/runtime v0.3.0
-	gomodules.xyz/ulids v0.1.0
 	gomodules.xyz/x v0.0.14
 	k8s.io/apimachinery v0.25.2
 	k8s.io/apiserver v0.25.2
@@ -163,11 +164,9 @@ require (
 	github.com/nats-io/jwt/v2 v2.3.0 // indirect
 	github.com/nats-io/nkeys v0.3.0 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
-	github.com/oklog/ulid/v2 v2.0.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.3-0.20211202183452-c5a74bcca799 // indirect
 	github.com/peterbourgon/diskv v2.0.1+incompatible // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.12.2 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
 	github.com/prometheus/common v0.32.1 // indirect

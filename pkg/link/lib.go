@@ -22,9 +22,9 @@ import (
 
 	"kubeops.dev/cluster-connector/pkg/shared"
 
+	"github.com/rs/xid"
 	"gomodules.xyz/blobfs"
 	"gomodules.xyz/jsonpatch/v2"
-	"gomodules.xyz/ulids"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -57,7 +57,7 @@ func NewBlobStore() (*lib.BlobStore, error) {
 }
 
 func NewOrder(url, name, version string, cv shared.ChartValues) (*v1alpha1.Order, error) {
-	cv.LinkID = ulids.MustNew().String()
+	cv.LinkID = xid.New().String()
 	patch, err := generatePatch(cv)
 	if err != nil {
 		return nil, err
