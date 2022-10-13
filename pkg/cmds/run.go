@@ -277,7 +277,10 @@ func respond(in []byte) (*transport.R, *http.Request, *http.Response, error) {
 
 	httpClient := &http.Client{
 		Transport: rt,
-		Timeout:   r.Timeout,
+		//Timeout:   r.Timeout,
+		// FIXME: Don't set a fixed timeout for all requests
+		// Currently required for pod log/exec streaming
+		Timeout: time.Second * 5,
 	}
 	resp, err := httpClient.Do(req)
 	return &r, req, resp, err

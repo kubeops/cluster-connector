@@ -6,7 +6,6 @@ require (
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-logr/logr v1.2.3
 	github.com/gogo/protobuf v1.3.2
-	github.com/google/uuid v1.3.0
 	github.com/nats-io/nats.go v1.17.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/xid v1.2.1
@@ -124,6 +123,7 @@ require (
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/google/wire v0.5.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.2.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
