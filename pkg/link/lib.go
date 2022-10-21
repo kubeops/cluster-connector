@@ -58,7 +58,10 @@ func NewBlobStore() (*lib.BlobStore, error) {
 }
 
 func NewOrder(url, name, version string, cc kubeops.ClusterConnectorSpec) (*v1alpha1.Order, error) {
-	cc.LinkID = xid.New().String()
+	if len(cc.LinkID) == 0 {
+		cc.LinkID = xid.New().String()
+	}
+
 	patch, err := generatePatch(cc)
 	if err != nil {
 		return nil, err
