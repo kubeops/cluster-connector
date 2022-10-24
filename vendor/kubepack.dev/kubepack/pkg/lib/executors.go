@@ -287,7 +287,7 @@ func (x *CRDReadinessChecker) Do() error {
 }
 
 type Helm3CommandPrinter struct {
-	Registry      *repo.Registry
+	Registry      repo.IRegistry
 	ChartRef      v1alpha1.ChartRef
 	Version       string
 	ReleaseName   string
@@ -389,6 +389,11 @@ func (x *Helm3CommandPrinter) Do() error {
 			return err
 		}
 		for _, v := range setValues {
+			// xref: https://github.com/kubepack/lib-helm/issues/72
+			if strings.ContainsRune(v, '\n') {
+				idx := strings.IndexRune(v, '=')
+				return fmt.Errorf(`found \n is values for %s`, v[:idx])
+			}
 			_, err = fmt.Fprintf(&buf, "%s--set %s \\\n", indent, v)
 			if err != nil {
 				return err
@@ -411,7 +416,7 @@ func (x *Helm3CommandPrinter) ValuesFile() []byte {
 }
 
 type YAMLPrinter struct {
-	Registry    *repo.Registry
+	Registry    repo.IRegistry
 	ChartRef    v1alpha1.ChartRef
 	Version     string
 	ReleaseName string
@@ -655,7 +660,7 @@ type ResourcePermission struct {
 }
 
 type PermissionChecker struct {
-	Registry    *repo.Registry
+	Registry    repo.IRegistry
 	ChartRef    v1alpha1.ChartRef
 	Version     string
 	ReleaseName string
@@ -943,7 +948,7 @@ func (x *ApplicationCreator) Do() error {
 }
 
 type ApplicationGenerator struct {
-	Registry *repo.Registry
+	Registry repo.IRegistry
 	Chart    v1alpha1.ChartSelection
 	chrt     *chart.Chart
 
