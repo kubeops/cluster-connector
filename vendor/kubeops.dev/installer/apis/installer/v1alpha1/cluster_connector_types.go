@@ -69,13 +69,18 @@ type ClusterConnectorSpec struct {
 	// If specified, the pod's scheduling constraints
 	// +optional
 	Affinity *core.Affinity       `json:"affinity"`
+	Platform PlatformSpec         `json:"platform"`
 	LinkID   string               `json:"linkID"`
 	Nats     ClusterConnectorNats `json:"nats"`
 }
 
+type PlatformSpec struct {
+	BaseURL string `json:"baseURL"`
+}
+
 type ClusterConnectorNats struct {
-	Address string `json:"addr"`
-	Creds   string `json:"creds"`
+	Address      string `json:"addr"`
+	EncodedCreds string `json:"encodedCreds"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

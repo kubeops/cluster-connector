@@ -31,14 +31,15 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"kmodules.xyz/client-go/tools/clusterid"
 	"kubepack.dev/kubepack/pkg/lib"
+	"kubepack.dev/lib-helm/pkg/repo"
 )
 
 var links = map[string]shared.LinkData{}
 
-func genLink(fs blobfs.Interface, bs *lib.BlobStore, u shared.User, req shared.LinkRequest) (*shared.Link, error) {
+func genLink(fs blobfs.Interface, bs *lib.BlobStore, reg repo.IRegistry, u shared.User, req shared.LinkRequest) (*shared.Link, error) {
 	now := time.Now()
 
-	l, err := link.Generate(bs, kubeops.ClusterConnectorSpec{
+	l, err := link.Generate(bs, reg, kubeops.ClusterConnectorSpec{
 		LinkID: "",
 		Nats:   kubeops.ClusterConnectorNats{},
 	})
