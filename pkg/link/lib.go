@@ -30,15 +30,16 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"kubepack.dev/kubepack/apis/kubepack/v1alpha1"
 	"kubepack.dev/kubepack/pkg/lib"
+	"kubepack.dev/lib-helm/pkg/repo"
 )
 
-func Generate(bs *lib.BlobStore, cv shared.ChartValues) (*shared.Link, error) {
+func Generate(bs *lib.BlobStore, reg repo.IRegistry, cv shared.ChartValues) (*shared.Link, error) {
 	order, err := NewOrder(shared.ConnectorChartURL, shared.ConnectorChartName, shared.ConnectorChartVersion, cv)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := GenerateScripts(bs, order)
+	result, err := GenerateScripts(bs, reg, order)
 	if err != nil {
 		return nil, err
 	}
@@ -113,13 +114,13 @@ func generatePatch(cv shared.ChartValues) ([]byte, error) {
 	return json.MarshalIndent(ops, "", "  ")
 }
 
-func GenerateScripts(bs *lib.BlobStore, order *v1alpha1.Order) (map[string]string, error) {
-	scriptsYAML, err := lib.GenerateYAMLScript(bs, lib.DefaultRegistry, *order, lib.DisableApplicationCRD, lib.OsIndependentScript)
+func GenerateScripts(bs *lib.BlobStore, reg repo.IRegistry, order *v1alpha1.Order) (map[string]string, error) {
+	scriptsYAML, err := lib.GenerateYAMLScript(bs, reg, *order, lib.DisableApplicationCRD, lib.OsIndependentScript)
 	if err != nil {
 		return nil, err
 	}
 
-	scriptsHelm3, err := lib.GenerateHelm3Script(bs, lib.DefaultRegistry, *order, lib.DisableApplicationCRD, lib.OsIndependentScript)
+	scriptsHelm3, err := lib.GenerateHelm3Script(bs, reg, *order, lib.DisableApplicationCRD, lib.OsIndependentScript)
 	if err != nil {
 		return nil, err
 	}

@@ -17,22 +17,31 @@ require (
 	go.bytebuilders.dev/license-verifier v0.12.0
 	go.wandrs.dev/binding v0.0.3-0.20220318024734-9a147576d26c
 	go.wandrs.dev/inject v0.0.1
-	golang.org/x/text v0.3.7
+	golang.org/x/text v0.4.0
 	gomodules.xyz/blobfs v0.1.11
 	gomodules.xyz/cert v1.5.0
 	gomodules.xyz/jsonpatch/v2 v2.2.0
 	gomodules.xyz/logs v0.0.6
 	gomodules.xyz/runtime v0.3.0
 	gomodules.xyz/x v0.0.14
-	k8s.io/apimachinery v0.25.2
-	k8s.io/apiserver v0.25.2
+	k8s.io/apimachinery v0.25.3
+	k8s.io/apiserver v0.25.3
 	k8s.io/cli-runtime v0.25.2
-	k8s.io/client-go v0.25.2
+	k8s.io/client-go v0.25.3
 	k8s.io/klog/v2 v2.80.1
 	kmodules.xyz/client-go v0.25.6
 	kmodules.xyz/custom-resources v0.25.0
-	kubepack.dev/kubepack v0.5.0
+	kubepack.dev/kubepack v0.5.2
+	kubepack.dev/lib-helm v0.5.5
 	sigs.k8s.io/controller-runtime v0.13.0
+)
+
+require (
+	github.com/fluxcd/helm-controller/api v0.26.0 // indirect
+	github.com/fluxcd/pkg/apis/acl v0.1.0 // indirect
+	github.com/fluxcd/pkg/apis/kustomize v0.6.0 // indirect
+	github.com/fluxcd/pkg/apis/meta v0.17.0 // indirect
+	github.com/fluxcd/source-controller/api v0.31.0 // indirect
 )
 
 require (
@@ -55,8 +64,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.2 // indirect
 	github.com/Masterminds/squirrel v1.5.3 // indirect
-	github.com/PuerkitoBio/purell v1.1.1 // indirect
-	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
+	github.com/PuerkitoBio/purell v1.2.0 // indirect
 	github.com/alessio/shellescape v1.4.1 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535 // indirect
 	github.com/aws/aws-sdk-go v1.43.31 // indirect
@@ -193,7 +201,7 @@ require (
 	go.wandrs.dev/http v0.0.1 // indirect
 	gocloud.dev v0.26.0 // indirect
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
-	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
+	golang.org/x/net v0.0.0-20220921203646-d300de134e69 // indirect
 	golang.org/x/oauth2 v0.0.0-20220309155454-6242fa91716a // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
 	golang.org/x/sys v0.0.0-20220906135438-9e1f76180b77 // indirect
@@ -218,19 +226,18 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	helm.sh/helm/v3 v3.0.0-00010101000000-000000000000 // indirect
-	k8s.io/api v0.25.2 // indirect
-	k8s.io/apiextensions-apiserver v0.25.2 // indirect
-	k8s.io/component-base v0.25.2 // indirect
+	k8s.io/api v0.25.3 // indirect
+	k8s.io/apiextensions-apiserver v0.25.3 // indirect
+	k8s.io/component-base v0.25.3 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803164354-a70c9af30aea // indirect
-	k8s.io/kubectl v0.25.0 // indirect
+	k8s.io/kubectl v0.25.2 // indirect
 	k8s.io/utils v0.0.0-20220823124924-e9cbc92d1a73 // indirect
 	kmodules.xyz/apiversion v0.2.0 // indirect
-	kmodules.xyz/apply v0.24.1 // indirect
+	kmodules.xyz/apply v0.25.0 // indirect
 	kmodules.xyz/offshoot-api v0.25.0 // indirect
-	kmodules.xyz/resource-metadata v0.13.0 // indirect
+	kmodules.xyz/resource-metadata v0.13.1 // indirect
 	kmodules.xyz/resource-metrics v0.25.0 // indirect
-	kubepack.dev/lib-helm v0.4.1 // indirect
-	kubepack.dev/preset v0.0.0-20220318014008-5b564b7dc9e7 // indirect
+	kubepack.dev/preset v0.0.2 // indirect
 	oras.land/oras-go v1.2.0 // indirect
 	sigs.k8s.io/application v0.0.0-00010101000000-000000000000 // indirect
 	sigs.k8s.io/cli-utils v0.33.0 // indirect

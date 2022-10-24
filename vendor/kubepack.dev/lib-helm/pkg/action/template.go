@@ -21,7 +21,7 @@ type Renderer struct {
 	cfg *ha.Configuration
 
 	opts InstallOptions
-	reg  *repo.Registry
+	reg  repo.IRegistry
 }
 
 func NewRenderer() (*Renderer, error) {
@@ -40,7 +40,7 @@ func NewRendererForConfig(cfg *ha.Configuration) *Renderer {
 		// ChartURL:  url,
 		// ChartName: name,
 		// Version:   version,
-		Values: values.Options{
+		Options: values.Options{
 			ValuesFile:  "",
 			ValuesPatch: nil,
 		},
@@ -70,7 +70,7 @@ func (x *Renderer) ForChart(url, name, version string) *Renderer {
 	return x
 }
 
-func (x *Renderer) WithRegistry(reg *repo.Registry) *Renderer {
+func (x *Renderer) WithRegistry(reg repo.IRegistry) *Renderer {
 	x.reg = reg
 	return x
 }
@@ -122,7 +122,7 @@ func (x *Renderer) Run() (string, map[string]string, error) {
 		}
 	}
 
-	vals, err := x.opts.Values.MergeValues(chrt.Chart)
+	vals, err := x.opts.Options.MergeValues(chrt.Chart)
 	if err != nil {
 		return "", nil, err
 	}

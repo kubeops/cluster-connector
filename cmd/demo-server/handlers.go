@@ -32,11 +32,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"kmodules.xyz/client-go/tools/clusterid"
 	"kubepack.dev/kubepack/pkg/lib"
+	"kubepack.dev/lib-helm/pkg/repo"
 )
 
 var links = map[string]shared.LinkData{}
 
-func genLink(fs blobfs.Interface, bs *lib.BlobStore, u shared.User, req shared.LinkRequest) (*shared.Link, error) {
+func genLink(fs blobfs.Interface, bs *lib.BlobStore, reg repo.IRegistry, u shared.User, req shared.LinkRequest) (*shared.Link, error) {
 	domain := shared.Domain(u.Email)
 	now := time.Now()
 	timestamp := []byte(now.UTC().Format(time.RFC3339))
@@ -54,7 +55,7 @@ func genLink(fs blobfs.Interface, bs *lib.BlobStore, u shared.User, req shared.L
 		return nil, err
 	}
 
-	l, err := link.Generate(bs, shared.ChartValues{
+	l, err := link.Generate(bs, reg, shared.ChartValues{
 		User: shared.UserValues{
 			User:  u,
 			Token: token.String(),

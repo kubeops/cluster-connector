@@ -34,6 +34,7 @@ import (
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2/klogr"
 	cu "kmodules.xyz/client-go/client"
+	"kubepack.dev/lib-helm/pkg/repo"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -68,6 +69,8 @@ func main() {
 		m.Use(binding.Inject(func(injector inject.Injector) error {
 			injector.Map(fs)
 			injector.Map(bs)
+			var reg repo.IRegistry = repo.NewDiskCacheRegistry()
+			injector.Map(reg)
 
 			// WARNING: Must be detected from signed-in user and connect to NATS accordingly
 			injector.Map(testUser)
