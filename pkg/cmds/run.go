@@ -224,26 +224,7 @@ func addSubscribers(nc *nats.Conn, names shared.SubjectNames) error {
 			klog.ErrorS(err, "failed to respond to proxy request")
 		}
 	})
-	if err != nil {
-		return err
-	}
-
-	_, edgeSub = names.ProxyStatusSubjects()
-	_, err = nc.QueueSubscribe(edgeSub, queue, func(msg *nats.Msg) {
-		if bytes.Equal(msg.Data, []byte("PING")) {
-			if err := msg.RespondMsg(&nats.Msg{
-				Subject: msg.Reply,
-				Data:    []byte("PONG"),
-			}); err != nil {
-				klog.ErrorS(err, "failed to respond to ping")
-			}
-		}
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // k8s.io/client-go/transport/cache.go

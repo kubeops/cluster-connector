@@ -17,14 +17,12 @@ limitations under the License.
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"time"
 
 	"kubeops.dev/cluster-connector/pkg/link"
 	restproxy "kubeops.dev/cluster-connector/pkg/rest"
 	"kubeops.dev/cluster-connector/pkg/shared"
-	"kubeops.dev/cluster-connector/pkg/transport"
 	kubeops "kubeops.dev/installer/apis/installer/v1alpha1"
 
 	"github.com/nats-io/nats.go"
@@ -70,12 +68,6 @@ func handleCallback(fs blobfs.Interface, nc *nats.Conn, in shared.CallbackReques
 
 	names := shared.CrossAccountNames{LinkID: in.LinkID}
 
-	// check PING
-	err := ping(nc, names)
-	if err != nil {
-		return err
-	}
-
 	// check clusterID
 	cfg, err := restproxy.GetForKubeConfig([]byte(l.KubeConfig), "", nc, names)
 	if err != nil {
@@ -101,16 +93,5 @@ func handleCallback(fs blobfs.Interface, nc *nats.Conn, in shared.CallbackReques
 	// OR
 	// keep it private and give users a signed URL?
 
-	return nil
-}
-
-func ping(nc *nats.Conn, names shared.SubjectNames) error {
-	pong, err := transport.Proxy(nc, names, []byte("PING"), 5*time.Second)
-	if err != nil {
-		return fmt.Errorf("failed to ping cluster connector for linkID %s", names.GetLinkID())
-	}
-	if !bytes.Equal(pong, []byte("PONG")) {
-		return fmt.Errorf("expected response PONG from linkID %s, received %s", names.GetLinkID(), string(pong))
-	}
 	return nil
 }

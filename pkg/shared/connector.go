@@ -33,7 +33,6 @@ const (
 	ConnectorAPIPathPrefix   = "/api/v1/connector"
 	ConnectorLinkAPIPath     = "/link"
 	ConnectorCallbackAPIPath = "/link/callback"
-	ConnectorStatusAPIPath   = "/clusters/{clusterID}/status"
 )
 
 const (
@@ -54,7 +53,6 @@ const (
 type SubjectNames interface {
 	GetLinkID() string
 	ProxyHandlerSubjects() (hubSub, edgeSub string)
-	ProxyStatusSubjects() (hubSub, edgeSub string)
 	ProxyResponseSubjects() (hubSub, edgeSub string)
 }
 
@@ -70,11 +68,6 @@ func (n CrossAccountNames) GetLinkID() string {
 
 func (n CrossAccountNames) ProxyHandlerSubjects() (hubSub, edgeSub string) {
 	prefix := "k8s.proxy.handler"
-	return fmt.Sprintf("%s.%s", prefix, n.LinkID), prefix
-}
-
-func (n CrossAccountNames) ProxyStatusSubjects() (hubSub, edgeSub string) {
-	prefix := "k8s.%s.proxy.status"
 	return fmt.Sprintf("%s.%s", prefix, n.LinkID), prefix
 }
 
@@ -96,12 +89,6 @@ func (n SameAccountNames) GetLinkID() string {
 
 func (n SameAccountNames) ProxyHandlerSubjects() (hubSub, edgeSub string) {
 	prefix := "k8s.proxy.handler"
-	sub := fmt.Sprintf("%s.%s", prefix, n.LinkID)
-	return sub, sub
-}
-
-func (n SameAccountNames) ProxyStatusSubjects() (hubSub, edgeSub string) {
-	prefix := "k8s.%s.proxy.status"
 	sub := fmt.Sprintf("%s.%s", prefix, n.LinkID)
 	return sub, sub
 }
@@ -131,11 +118,5 @@ func ConnectorCallbackEndpoint(baseURL string) string {
 		u = info.APIServerAddress()
 	}
 	u.Path = path.Join(u.Path, ConnectorAPIPathPrefix, ConnectorCallbackAPIPath)
-	return u.String()
-}
-
-func ConnectorStatusAPIEndpoint() string {
-	u := info.APIServerAddress()
-	u.Path = path.Join(u.Path, ConnectorAPIPathPrefix, ConnectorStatusAPIPath)
 	return u.String()
 }

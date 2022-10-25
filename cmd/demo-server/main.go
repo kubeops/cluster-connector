@@ -83,11 +83,6 @@ func main() {
 		m.
 			With(binding.JSON(shared.CallbackRequest{})).
 			Post(shared.ConnectorCallbackAPIPath, binding.HandlerFunc(handleCallback))
-
-		m.Get(shared.ConnectorStatusAPIPath, binding.HandlerFunc(func(nc *nats.Conn, r *http.Request) error {
-			linkID := chi.URLParam(r, "linkID")
-			return ping(nc, shared.CrossAccountNames{LinkID: linkID})
-		}))
 	})
 
 	_ = http.ListenAndServe(":3333", m)
