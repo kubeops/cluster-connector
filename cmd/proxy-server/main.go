@@ -76,7 +76,7 @@ func main() {
 }
 
 func handle(w http.ResponseWriter, r *http.Request, nc *nats.Conn) error {
-	clusterID := chi.URLParam(r, "clusterID")
+	linkID := chi.URLParam(r, "linkID")
 	name := chi.URLParam(r, "name")
 
 	// Allow ID as "svcname.namespace", "svcname.namespace:port", or "scheme:svcname.namespace:port".
@@ -84,7 +84,7 @@ func handle(w http.ResponseWriter, r *http.Request, nc *nats.Conn) error {
 	if !valid {
 		return errors.NewBadRequest(fmt.Sprintf("invalid service request %q", name))
 	}
-	c, err := httpproxy.NewClient(nc, clusterID)
+	c, err := httpproxy.NewClient(nc, shared.CrossAccountNames{LinkID: linkID})
 	if err != nil {
 		return err
 	}

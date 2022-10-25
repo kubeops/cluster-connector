@@ -23,6 +23,8 @@ import (
 	"sync"
 	"time"
 
+	"kubeops.dev/cluster-connector/pkg/shared"
+
 	"github.com/nats-io/nats.go"
 	"k8s.io/client-go/transport"
 )
@@ -57,7 +59,7 @@ func (t tlsCacheKey) String() string {
 	return fmt.Sprintf("insecure:%v, caData:%#v, certData:%#v, keyData:%s, serverName:%s, disableCompression:%t", t.insecure, t.caData, t.certData, keyText, t.serverName, t.disableCompression)
 }
 
-func (c *tlsTransportCache) get(config *transport.Config, nc *nats.Conn, sub string, timeout time.Duration) (http.RoundTripper, error) {
+func (c *tlsTransportCache) get(config *transport.Config, nc *nats.Conn, names shared.SubjectNames, timeout time.Duration) (http.RoundTripper, error) {
 	key, canCache, err := tlsConfigKey(config)
 	if err != nil {
 		return nil, err
@@ -86,7 +88,7 @@ func (c *tlsTransportCache) get(config *transport.Config, nc *nats.Conn, sub str
 
 	rt := &NatsTransport{
 		Conn:               nc,
-		Subject:            sub,
+		Names:              names,
 		Timeout:            timeout,
 		DisableCompression: config.DisableCompression,
 		TLS:                tlsConfig,

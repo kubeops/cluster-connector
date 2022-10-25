@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/rs/xid"
 	"go.bytebuilders.dev/license-verifier/info"
 )
 
@@ -32,7 +33,6 @@ const (
 	ConnectorAPIPathPrefix   = "/api/v1/connector"
 	ConnectorLinkAPIPath     = "/link"
 	ConnectorCallbackAPIPath = "/link/callback"
-	ConnectorStatusAPIPath   = "/clusters/{clusterID}/status"
 )
 
 const (
@@ -50,12 +50,54 @@ const (
 	ConnectorLinkHost           = "https://connect.bytebuilders.link"
 )
 
-func ProxyHandlerSubject(clusterUID string) string {
-	return fmt.Sprintf("k8s.%s.proxy.handler", clusterUID)
+type SubjectNames interface {
+	GetLinkID() string
+	ProxyHandlerSubjects() (hubSub, edgeSub string)
+	ProxyResponseSubjects() (hubSub, edgeSub string)
 }
 
-func ProxyStatusSubject(clusterUID string) string {
-	return fmt.Sprintf("k8s.%s.proxy.status", clusterUID)
+type CrossAccountNames struct {
+	LinkID string
+}
+
+var _ SubjectNames = CrossAccountNames{}
+
+func (n CrossAccountNames) GetLinkID() string {
+	return n.LinkID
+}
+
+func (n CrossAccountNames) ProxyHandlerSubjects() (hubSub, edgeSub string) {
+	prefix := "k8s.proxy.handler"
+	return fmt.Sprintf("%s.%s", prefix, n.LinkID), prefix
+}
+
+func (n CrossAccountNames) ProxyResponseSubjects() (hubSub, edgeSub string) {
+	prefix := "k8s.proxy.resp"
+	uid := xid.New().String()
+	return fmt.Sprintf("%s.%s.%s", prefix, n.LinkID, uid), fmt.Sprintf("%s.%s", prefix, uid)
+}
+
+type SameAccountNames struct {
+	LinkID string
+}
+
+var _ SubjectNames = SameAccountNames{}
+
+func (n SameAccountNames) GetLinkID() string {
+	return n.LinkID
+}
+
+func (n SameAccountNames) ProxyHandlerSubjects() (hubSub, edgeSub string) {
+	prefix := "k8s.proxy.handler"
+	sub := fmt.Sprintf("%s.%s", prefix, n.LinkID)
+	return sub, sub
+}
+
+func (n SameAccountNames) ProxyResponseSubjects() (hubSub, edgeSub string) {
+	prefix := "k8s.proxy.resp"
+	uid := xid.New().String()
+	sub := fmt.Sprintf("%s.%s.%s", prefix, n.LinkID, uid)
+	return sub, sub
 }
 
 func ConnectorLinkAPIEndpoint() string {
@@ -76,11 +118,5 @@ func ConnectorCallbackEndpoint(baseURL string) string {
 		u = info.APIServerAddress()
 	}
 	u.Path = path.Join(u.Path, ConnectorAPIPathPrefix, ConnectorCallbackAPIPath)
-	return u.String()
-}
-
-func ConnectorStatusAPIEndpoint() string {
-	u := info.APIServerAddress()
-	u.Path = path.Join(u.Path, ConnectorAPIPathPrefix, ConnectorStatusAPIPath)
 	return u.String()
 }

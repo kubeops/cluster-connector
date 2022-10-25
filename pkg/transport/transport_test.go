@@ -21,6 +21,8 @@ import (
 	"testing"
 	"time"
 
+	"kubeops.dev/cluster-connector/pkg/shared"
+
 	"k8s.io/client-go/transport"
 )
 
@@ -257,7 +259,7 @@ func TestNew(t *testing.T) {
 	}
 	for k, testCase := range testCases {
 		t.Run(k, func(t *testing.T) {
-			rt, err := New(testCase.Config, nil, "", 5*time.Second)
+			rt, err := New(testCase.Config, nil, shared.SameAccountNames{LinkID: ""}, 5*time.Second)
 			switch {
 			case testCase.Err && err == nil:
 				t.Fatal("unexpected non-error")

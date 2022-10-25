@@ -27,6 +27,8 @@ import (
 	"sync"
 	"time"
 
+	"kubeops.dev/cluster-connector/pkg/shared"
+
 	"github.com/nats-io/nats.go"
 	"k8s.io/klog/v2"
 )
@@ -115,7 +117,7 @@ func disconnectHandler(nc *nats.Conn, err error) {
 
 type NatsTransport struct {
 	Conn    *nats.Conn
-	Subject string
+	Names   shared.SubjectNames
 	Timeout time.Duration
 	// DisableCompression bypasses automatic GZip compression requests to the
 	// server.
@@ -183,12 +185,40 @@ func (rt *NatsTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 
-	msg, err := rt.Conn.RequestMsg(&nats.Msg{
-		Subject: rt.Subject,
-		Data:    buf.Bytes(),
-	}, timeout)
+	resp, err := Proxy(rt.Conn, rt.Names, buf.Bytes(), timeout)
 	if err != nil {
 		return nil, err
 	}
-	return http.ReadResponse(bufio.NewReader(bytes.NewReader(msg.Data)), r)
+	return http.ReadResponse(bufio.NewReader(bytes.NewReader(resp)), r)
+}
+
+// SEE: https://github.com/nats-io/nats.docs/blob/master/using-nats/developing-with-nats/sending/replyto.md#including-a-reply-subject
+func Proxy(nc *nats.Conn, names shared.SubjectNames, data []byte, timeout time.Duration) ([]byte, error) {
+	hubRespSub, edgeRespSub := names.ProxyResponseSubjects()
+
+	// Listen for a single response
+	sub, err := nc.SubscribeSync(hubRespSub)
+	if err != nil {
+		return nil, err
+	}
+
+	// Send the request.
+	// If processing is synchronous, use Proxy() which returns the response message.
+	hubReqSub, _ := names.ProxyHandlerSubjects()
+	if err := nc.PublishRequest(hubReqSub, edgeRespSub, data); err != nil {
+		return nil, err
+	}
+
+	// Read the reply
+	msg, err := sub.NextMsg(timeout)
+	if err != nil {
+		return nil, err
+	}
+
+	err = sub.Unsubscribe()
+	if err != nil {
+		return nil, err
+	}
+
+	return msg.Data, nil
 }

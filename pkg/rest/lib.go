@@ -25,11 +25,11 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-func GetForRestConfig(config *rest.Config, nc *nats.Conn, cid string) (*rest.Config, error) {
-	return GetNoCopyConfig(rest.CopyConfig(config), nc, cid)
+func GetForRestConfig(config *rest.Config, nc *nats.Conn, names shared.SubjectNames) (*rest.Config, error) {
+	return GetNoCopyConfig(rest.CopyConfig(config), nc, names)
 }
 
-func GetNoCopyConfig(copy *rest.Config, nc *nats.Conn, cid string) (*rest.Config, error) {
+func GetNoCopyConfig(copy *rest.Config, nc *nats.Conn, names shared.SubjectNames) (*rest.Config, error) {
 	if nc == nil {
 		return copy, nil
 	}
@@ -38,11 +38,11 @@ func GetNoCopyConfig(copy *rest.Config, nc *nats.Conn, cid string) (*rest.Config
 	if err != nil {
 		return nil, err
 	}
-	copy.Transport, err = transport.New(cfg, nc, shared.ProxyHandlerSubject(cid), shared.Timeout)
+	copy.Transport, err = transport.New(cfg, nc, names, shared.Timeout)
 	return copy, err
 }
 
-func GetForKubeConfig(kubeconfigBytes []byte, contextName string, nc *nats.Conn, cid string) (*rest.Config, error) {
+func GetForKubeConfig(kubeconfigBytes []byte, contextName string, nc *nats.Conn, names shared.SubjectNames) (*rest.Config, error) {
 	kubeconfig, err := clientcmd.Load(kubeconfigBytes)
 	if err != nil {
 		return nil, err
@@ -51,5 +51,5 @@ func GetForKubeConfig(kubeconfigBytes []byte, contextName string, nc *nats.Conn,
 	if err != nil {
 		return nil, err
 	}
-	return GetNoCopyConfig(config, nc, cid)
+	return GetNoCopyConfig(config, nc, names)
 }

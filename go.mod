@@ -6,7 +6,6 @@ require (
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-logr/logr v1.2.3
 	github.com/gogo/protobuf v1.3.2
-	github.com/google/uuid v1.3.0
 	github.com/nats-io/nats.go v1.17.0
 	github.com/pkg/errors v0.9.1
 	github.com/rs/xid v1.2.1
@@ -31,17 +30,10 @@ require (
 	k8s.io/klog/v2 v2.80.1
 	kmodules.xyz/client-go v0.25.6
 	kmodules.xyz/custom-resources v0.25.0
+	kubeops.dev/installer v0.0.0-20221024115757-70c4bfe322c6
 	kubepack.dev/kubepack v0.5.2
 	kubepack.dev/lib-helm v0.5.5
 	sigs.k8s.io/controller-runtime v0.13.0
-)
-
-require (
-	github.com/fluxcd/helm-controller/api v0.26.0 // indirect
-	github.com/fluxcd/pkg/apis/acl v0.1.0 // indirect
-	github.com/fluxcd/pkg/apis/kustomize v0.6.0 // indirect
-	github.com/fluxcd/pkg/apis/meta v0.17.0 // indirect
-	github.com/fluxcd/source-controller/api v0.31.0 // indirect
 )
 
 require (
@@ -109,6 +101,11 @@ require (
 	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
+	github.com/fluxcd/helm-controller/api v0.26.0 // indirect
+	github.com/fluxcd/pkg/apis/acl v0.1.0 // indirect
+	github.com/fluxcd/pkg/apis/kustomize v0.6.0 // indirect
+	github.com/fluxcd/pkg/apis/meta v0.17.0 // indirect
+	github.com/fluxcd/source-controller/api v0.31.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/fvbommel/sortorder v1.0.1 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.1 // indirect
@@ -131,6 +128,7 @@ require (
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
+	github.com/google/uuid v1.3.0 // indirect
 	github.com/google/wire v0.5.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.2.0 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect

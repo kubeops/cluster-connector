@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"kubeops.dev/cluster-connector/pkg/shared"
+	kubeops "kubeops.dev/installer/apis/installer/v1alpha1"
 
 	"github.com/rs/xid"
 	"gomodules.xyz/blobfs"
@@ -33,7 +34,7 @@ import (
 	"kubepack.dev/lib-helm/pkg/repo"
 )
 
-func Generate(bs *lib.BlobStore, reg repo.IRegistry, cv shared.ChartValues) (*shared.Link, error) {
+func Generate(bs *lib.BlobStore, reg repo.IRegistry, cv kubeops.ClusterConnectorSpec) (*shared.Link, error) {
 	order, err := NewOrder(shared.ConnectorChartURL, shared.ConnectorChartName, shared.ConnectorChartVersion, cv)
 	if err != nil {
 		return nil, err
@@ -57,9 +58,12 @@ func NewBlobStore() (*lib.BlobStore, error) {
 	}, nil
 }
 
-func NewOrder(url, name, version string, cv shared.ChartValues) (*v1alpha1.Order, error) {
-	cv.LinkID = xid.New().String()
-	patch, err := generatePatch(cv)
+func NewOrder(url, name, version string, cc kubeops.ClusterConnectorSpec) (*v1alpha1.Order, error) {
+	if len(cc.LinkID) == 0 {
+		cc.LinkID = xid.New().String()
+	}
+
+	patch, err := generatePatch(cc)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +74,7 @@ func NewOrder(url, name, version string, cv shared.ChartValues) (*v1alpha1.Order
 			Kind:       v1alpha1.ResourceKindOrder,
 		}, ObjectMeta: metav1.ObjectMeta{
 			Name:              name,
-			UID:               types.UID(cv.LinkID), // using ulids instead of UUID
+			UID:               types.UID(cc.LinkID), // using ulids instead of UUID
 			CreationTimestamp: metav1.NewTime(time.Now()),
 		},
 		Spec: v1alpha1.OrderSpec{
@@ -97,13 +101,13 @@ func NewOrder(url, name, version string, cv shared.ChartValues) (*v1alpha1.Order
 	}, nil
 }
 
-func generatePatch(cv shared.ChartValues) ([]byte, error) {
-	data, err := json.Marshal(cv)
+func generatePatch(cc kubeops.ClusterConnectorSpec) ([]byte, error) {
+	data, err := json.Marshal(cc)
 	if err != nil {
 		return nil, err
 	}
 
-	empty, err := json.Marshal(shared.ChartValues{})
+	empty, err := json.Marshal(kubeops.ClusterConnectorSpec{})
 	if err != nil {
 		return nil, err
 	}

@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	rest2 "kubeops.dev/cluster-connector/pkg/rest"
+	"kubeops.dev/cluster-connector/pkg/shared"
 
 	auditlib "go.bytebuilders.dev/audit/lib"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -82,7 +83,7 @@ func main() {
 	// k8s.io/client-go/rest/config.go
 	// k8s.io/client-go/transport/transport.go # TLSConfigFor
 
-	c2, err := rest2.GetForRestConfig(config, ncfg.Client, cid)
+	c2, err := rest2.GetForRestConfig(config, ncfg.Client, shared.CrossAccountNames{LinkID: cid})
 
 	kc := kubernetes.NewForConfigOrDie(c2)
 	nodes, err := kc.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})

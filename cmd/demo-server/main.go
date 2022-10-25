@@ -69,8 +69,7 @@ func main() {
 		m.Use(binding.Inject(func(injector inject.Injector) error {
 			injector.Map(fs)
 			injector.Map(bs)
-			var reg repo.IRegistry = repo.NewDiskCacheRegistry()
-			injector.Map(reg)
+			injector.MapTo(repo.NewDiskCacheRegistry(), (repo.IRegistry)(nil))
 
 			// WARNING: Must be detected from signed-in user and connect to NATS accordingly
 			injector.Map(testUser)
@@ -84,11 +83,6 @@ func main() {
 		m.
 			With(binding.JSON(shared.CallbackRequest{})).
 			Post(shared.ConnectorCallbackAPIPath, binding.HandlerFunc(handleCallback))
-
-		m.Get(shared.ConnectorStatusAPIPath, binding.HandlerFunc(func(nc *nats.Conn, r *http.Request) error {
-			clusterID := chi.URLParam(r, "clusterID")
-			return ping(nc, clusterID)
-		}))
 	})
 
 	_ = http.ListenAndServe(":3333", m)

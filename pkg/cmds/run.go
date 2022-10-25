@@ -26,6 +26,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -35,7 +36,6 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/nats-io/nats.go"
 	"github.com/spf13/cobra"
-	"go.bytebuilders.dev/license-verifier/info"
 	v "gomodules.xyz/x/version"
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	"k8s.io/apiserver/pkg/endpoints/handlers/responsewriters"
@@ -45,6 +45,7 @@ import (
 	"k8s.io/klog/v2/klogr"
 	cu "kmodules.xyz/client-go/client"
 	"kmodules.xyz/client-go/meta"
+	_ "kmodules.xyz/client-go/meta"
 	"kmodules.xyz/client-go/tools/clusterid"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -61,6 +62,7 @@ func NewCmdRun() *cobra.Command {
 		linkID       string
 		metricsAddr  string
 		natsAddr     string
+		numThreads   = 5
 		natsCredFile string
 		probeAddr    string
 	)
@@ -104,10 +106,12 @@ func NewCmdRun() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = addSubscribers(nc, cid)
-			if err != nil {
-				setupLog.Error(err, "failed to setup proxy handler subscribers")
-				os.Exit(1)
+			for i := 0; i < numThreads; i++ {
+				err = addSubscribers(nc, shared.CrossAccountNames{LinkID: linkID})
+				if err != nil {
+					setupLog.Error(err, "failed to setup proxy handler subscribers")
+					os.Exit(1)
+				}
 			}
 
 			if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -122,9 +126,8 @@ func NewCmdRun() *cobra.Command {
 			if err := mgr.Add(&callback{
 				baseURL: baseURL,
 				req: shared.CallbackRequest{
-					LinkID:      linkID,
-					ClusterID:   cid,
-					ProductName: info.ProductName,
+					LinkID:    linkID,
+					ClusterID: cid,
 				},
 			}); err != nil {
 				setupLog.Error(err, "failed to add link callback")
@@ -148,6 +151,7 @@ func NewCmdRun() *cobra.Command {
 	cmd.Flags().StringVar(&linkID, "link-id", linkID, "Link id")
 	cmd.Flags().StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	cmd.Flags().StringVar(&natsAddr, "nats-addr", "", "The NATS server address (only used for development).")
+	cmd.Flags().IntVar(&numThreads, "nats-handler-count", numThreads, "The number of handler threads used to respond to nats requests.")
 	cmd.Flags().StringVar(&natsCredFile, "nats-credential-file", natsCredFile, "PATH to NATS credential file")
 	cmd.Flags().StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 
@@ -160,10 +164,18 @@ var pool = sync.Pool{
 	},
 }
 
-func addSubscribers(nc *nats.Conn, cid string) error {
-	queue := fmt.Sprintf("k8s.%s.proxy", cid)
+func addSubscribers(nc *nats.Conn, names shared.SubjectNames) error {
+	queue := "cluster-connector"
+	if meta.PossiblyInCluster() {
+		ctrlName := meta.PodName()
+		if idx := strings.LastIndexByte(ctrlName, '-'); idx != -1 {
+			ctrlName = ctrlName[:idx]
+		}
+		queue = meta.PodNamespace() + "." + ctrlName
+	}
 
-	_, err := nc.QueueSubscribe(shared.ProxyHandlerSubject(cid), queue, func(msg *nats.Msg) {
+	_, edgeSub := names.ProxyHandlerSubjects()
+	_, err := nc.QueueSubscribe(edgeSub, queue, func(msg *nats.Msg) {
 		r2, req, resp, err := respond(msg.Data)
 		if err != nil {
 			status := responsewriters.ErrorToAPIStatus(err)
@@ -216,25 +228,7 @@ func addSubscribers(nc *nats.Conn, cid string) error {
 			klog.ErrorS(err, "failed to respond to proxy request")
 		}
 	})
-	if err != nil {
-		return err
-	}
-
-	_, err = nc.QueueSubscribe(shared.ProxyStatusSubject(cid), queue, func(msg *nats.Msg) {
-		if bytes.Equal(msg.Data, []byte("PING")) {
-			if err := msg.RespondMsg(&nats.Msg{
-				Subject: msg.Reply,
-				Data:    []byte("PONG"),
-			}); err != nil {
-				klog.ErrorS(err, "failed to respond to ping")
-			}
-		}
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 // k8s.io/client-go/transport/cache.go
@@ -276,10 +270,14 @@ func respond(in []byte) (*transport.R, *http.Request, *http.Response, error) {
 
 	// req.URL = nil
 	req.RequestURI = ""
-
+	timeout := r.Timeout
+	if timeout == 0 {
+		// Currently required for to break out pod log/exec streaming
+		timeout = 30 * time.Second
+	}
 	httpClient := &http.Client{
 		Transport: rt,
-		Timeout:   r.Timeout,
+		Timeout:   timeout,
 	}
 	resp, err := httpClient.Do(req)
 	return &r, req, resp, err

@@ -25,10 +25,8 @@ type Link struct {
 
 type LinkData struct {
 	LinkID     string
-	Token      string
 	ClusterID  string
 	NotAfter   time.Time
-	User       User
 	KubeConfig string
 }
 
@@ -59,7 +57,6 @@ type LinkRequest struct {
 }
 
 type CallbackRequest struct {
-	LinkID      string `json:"linkID"`
-	ClusterID   string `json:"clusterID"`
-	ProductName string `json:"productName"`
+	LinkID    string `json:"linkID"`
+	ClusterID string `json:"clusterID"`
 }

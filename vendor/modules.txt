@@ -1703,6 +1703,10 @@ kmodules.xyz/resource-metrics/batch/v1
 kmodules.xyz/resource-metrics/batch/v1beta1
 kmodules.xyz/resource-metrics/core/v1
 kmodules.xyz/resource-metrics/kubedb.com/v1alpha2
+# kubeops.dev/installer v0.0.0-20221024115757-70c4bfe322c6
+## explicit; go 1.18
+kubeops.dev/installer/apis/installer
+kubeops.dev/installer/apis/installer/v1alpha1
 # kubepack.dev/kubepack v0.5.2
 ## explicit; go 1.18
 kubepack.dev/kubepack/apis
