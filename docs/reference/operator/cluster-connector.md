@@ -15,17 +15,16 @@ aliases:
 ---
 ## cluster-connector
 
-Kubernetes ClusterConnector by AppsCode
+Kubernetes Cluster Connector by AppsCode
 
 ### Options
 
 ```
-  -h, --help                             help for cluster-connector
-      --use-kubeapiserver-fqdn-for-aks   if true, uses kube-apiserver FQDN for AKS cluster to workaround https://github.com/Azure/AKS/issues/522 (default true)
+  -h, --help   help for cluster-connector
 ```
 
 ### SEE ALSO
 
-* [cluster-connector run](/docs/reference/operator/cluster-connector_run.md)	 - Launch Audit operator
+* [cluster-connector run](/docs/reference/operator/cluster-connector_run.md)	 - Launch Cluster Connector
 * [cluster-connector version](/docs/reference/operator/cluster-connector_version.md)	 - Prints binary version number.
 
