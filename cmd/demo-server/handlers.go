@@ -24,6 +24,7 @@ import (
 	"kubeops.dev/cluster-connector/pkg/link"
 	restproxy "kubeops.dev/cluster-connector/pkg/rest"
 	"kubeops.dev/cluster-connector/pkg/shared"
+	"kubeops.dev/cluster-connector/pkg/transport"
 	kubeops "kubeops.dev/installer/apis/installer/v1alpha1"
 
 	"github.com/nats-io/nats.go"
@@ -67,14 +68,16 @@ func handleCallback(fs blobfs.Interface, nc *nats.Conn, in shared.CallbackReques
 		return fmt.Errorf("l %s expired %v ago", l.LinkID, now.Sub(l.NotAfter))
 	}
 
+	names := shared.CrossAccountNames{LinkID: in.LinkID}
+
 	// check PING
-	err := ping(nc, in.ClusterID)
+	err := ping(nc, names)
 	if err != nil {
 		return err
 	}
 
 	// check clusterID
-	cfg, err := restproxy.GetForKubeConfig([]byte(l.KubeConfig), "", nc, in.ClusterID)
+	cfg, err := restproxy.GetForKubeConfig([]byte(l.KubeConfig), "", nc, names)
 	if err != nil {
 		return fmt.Errorf("failed to proxied rest config, reason: %v", err)
 	}
@@ -101,13 +104,13 @@ func handleCallback(fs blobfs.Interface, nc *nats.Conn, in shared.CallbackReques
 	return nil
 }
 
-func ping(nc *nats.Conn, clusterID string) error {
-	pong, err := nc.Request(shared.ProxyStatusSubject(clusterID), []byte("PING"), 5*time.Second)
+func ping(nc *nats.Conn, names shared.SubjectNames) error {
+	pong, err := transport.Proxy(nc, names, []byte("PING"), 5*time.Second)
 	if err != nil {
-		return fmt.Errorf("failed to ping cluster connector for clustr id %s", clusterID)
+		return fmt.Errorf("failed to ping cluster connector for linkID %s", names.GetLinkID())
 	}
-	if !bytes.Equal(pong.Data, []byte("PONG")) {
-		return fmt.Errorf("expected response PONG from cluster id %s, received %s", clusterID, string(pong.Data))
+	if !bytes.Equal(pong, []byte("PONG")) {
+		return fmt.Errorf("expected response PONG from linkID %s, received %s", names.GetLinkID(), string(pong))
 	}
 	return nil
 }

@@ -26,8 +26,8 @@ import (
 	ktr "k8s.io/client-go/transport"
 )
 
-func NewClient(nc *nats.Conn, cid string) (*http.Client, error) {
-	tr, err := transport.New(&ktr.Config{}, nc, shared.ProxyHandlerSubject(cid), shared.Timeout)
+func NewClient(nc *nats.Conn, names shared.SubjectNames) (*http.Client, error) {
+	tr, err := transport.New(&ktr.Config{}, nc, names, shared.Timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -36,8 +36,8 @@ func NewClient(nc *nats.Conn, cid string) (*http.Client, error) {
 	}, nil
 }
 
-func NewClientForConfig(cfg *ktr.Config, nc *nats.Conn, cid string) (*http.Client, error) {
-	tr, err := transport.New(cfg, nc, shared.ProxyHandlerSubject(cid), shared.Timeout)
+func NewClientForConfig(cfg *ktr.Config, nc *nats.Conn, names shared.SubjectNames) (*http.Client, error) {
+	tr, err := transport.New(cfg, nc, names, shared.Timeout)
 	if err != nil {
 		return nil, err
 	}
@@ -46,10 +46,10 @@ func NewClientForConfig(cfg *ktr.Config, nc *nats.Conn, cid string) (*http.Clien
 	}, nil
 }
 
-func NewTLSClient(tls ktr.TLSConfig, nc *nats.Conn, cid string) (*http.Client, error) {
+func NewTLSClient(tls ktr.TLSConfig, nc *nats.Conn, names shared.SubjectNames) (*http.Client, error) {
 	tr, err := transport.New(&ktr.Config{
 		TLS: tls,
-	}, nc, shared.ProxyHandlerSubject(cid), shared.Timeout)
+	}, nc, names, shared.Timeout)
 	if err != nil {
 		return nil, err
 	}

@@ -24,13 +24,15 @@ import (
 	"os"
 	"time"
 
+	"kubeops.dev/cluster-connector/pkg/shared"
+
 	"github.com/nats-io/nats.go"
 	"k8s.io/client-go/transport"
 )
 
 // New returns an http.RoundTripper that will provide the authentication
 // or transport level security defined by the provided Config.
-func New(config *transport.Config, nc *nats.Conn, sub string, timeout time.Duration) (http.RoundTripper, error) {
+func New(config *transport.Config, nc *nats.Conn, names shared.SubjectNames, timeout time.Duration) (http.RoundTripper, error) {
 	// Set transport level security
 	//if config.Transport != nil && (config.HasCA() || config.HasCertAuth() || config.HasCertCallback() || config.TLS.Insecure) {
 	//	return nil, fmt.Errorf("using a custom transport with TLS certificate options or the insecure flag is not allowed")
@@ -46,7 +48,7 @@ func New(config *transport.Config, nc *nats.Conn, sub string, timeout time.Durat
 		return nil, fmt.Errorf("using a custom proxy")
 	}
 
-	rt, err := tlsCache.get(config, nc, sub, timeout)
+	rt, err := tlsCache.get(config, nc, names, timeout)
 	if err != nil {
 		return nil, err
 	}

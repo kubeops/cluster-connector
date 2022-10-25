@@ -26,6 +26,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -44,6 +45,7 @@ import (
 	"k8s.io/klog/v2/klogr"
 	cu "kmodules.xyz/client-go/client"
 	"kmodules.xyz/client-go/meta"
+	_ "kmodules.xyz/client-go/meta"
 	"kmodules.xyz/client-go/tools/clusterid"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
@@ -103,7 +105,7 @@ func NewCmdRun() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = addSubscribers(nc, cid)
+			err = addSubscribers(nc, shared.CrossAccountNames{LinkID: linkID})
 			if err != nil {
 				setupLog.Error(err, "failed to setup proxy handler subscribers")
 				os.Exit(1)
@@ -158,10 +160,18 @@ var pool = sync.Pool{
 	},
 }
 
-func addSubscribers(nc *nats.Conn, cid string) error {
-	queue := fmt.Sprintf("k8s.%s.proxy", cid)
+func addSubscribers(nc *nats.Conn, names shared.SubjectNames) error {
+	queue := "cluster-connector"
+	if meta.PossiblyInCluster() {
+		ctrlName := meta.PodName()
+		if idx := strings.LastIndexByte(ctrlName, '-'); idx != -1 {
+			ctrlName = ctrlName[:idx]
+		}
+		queue = meta.PodNamespace() + "." + ctrlName
+	}
 
-	_, err := nc.QueueSubscribe(shared.ProxyHandlerSubject(cid), queue, func(msg *nats.Msg) {
+	_, edgeSub := names.ProxyHandlerSubjects()
+	_, err := nc.QueueSubscribe(edgeSub, queue, func(msg *nats.Msg) {
 		r2, req, resp, err := respond(msg.Data)
 		if err != nil {
 			status := responsewriters.ErrorToAPIStatus(err)
@@ -218,7 +228,8 @@ func addSubscribers(nc *nats.Conn, cid string) error {
 		return err
 	}
 
-	_, err = nc.QueueSubscribe(shared.ProxyStatusSubject(cid), queue, func(msg *nats.Msg) {
+	_, edgeSub = names.ProxyStatusSubjects()
+	_, err = nc.QueueSubscribe(edgeSub, queue, func(msg *nats.Msg) {
 		if bytes.Equal(msg.Data, []byte("PING")) {
 			if err := msg.RespondMsg(&nats.Msg{
 				Subject: msg.Reply,

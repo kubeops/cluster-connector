@@ -18,6 +18,7 @@ package clientcmd
 
 import (
 	restproxy "kubeops.dev/cluster-connector/pkg/rest"
+	"kubeops.dev/cluster-connector/pkg/shared"
 
 	"github.com/nats-io/nats.go"
 	"github.com/spf13/pflag"
@@ -32,9 +33,9 @@ import (
 )
 
 type restClientGetter struct {
-	config    *clientcmdapi.Config
-	nc        *nats.Conn
-	clusterID string
+	config *clientcmdapi.Config
+	nc     *nats.Conn
+	names  shared.SubjectNames
 }
 
 var _ genericclioptions.RESTClientGetter = restClientGetter{}
@@ -44,7 +45,7 @@ func (r restClientGetter) ToRESTConfig() (*rest.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	return restproxy.GetNoCopyConfig(c2, r.nc, r.clusterID)
+	return restproxy.GetNoCopyConfig(c2, r.nc, r.names)
 }
 
 func (r restClientGetter) ToDiscoveryClient() (discovery.CachedDiscoveryInterface, error) {
@@ -74,8 +75,8 @@ func (r restClientGetter) ToRawKubeConfigLoader() clientcmd.ClientConfig {
 	return clientcmd.NewDefaultClientConfig(*r.config, &clientcmd.ConfigOverrides{})
 }
 
-func NewClientGetter(config *clientcmdapi.Config, nc *nats.Conn, clusterID string) genericclioptions.RESTClientGetter {
-	return &restClientGetter{config: config, nc: nc, clusterID: clusterID}
+func NewClientGetter(config *clientcmdapi.Config, nc *nats.Conn, names shared.SubjectNames) genericclioptions.RESTClientGetter {
+	return &restClientGetter{config: config, nc: nc, names: names}
 }
 
 func NewClientGetterFromFlags(fs *pflag.FlagSet) genericclioptions.RESTClientGetter {

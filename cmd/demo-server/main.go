@@ -85,8 +85,8 @@ func main() {
 			Post(shared.ConnectorCallbackAPIPath, binding.HandlerFunc(handleCallback))
 
 		m.Get(shared.ConnectorStatusAPIPath, binding.HandlerFunc(func(nc *nats.Conn, r *http.Request) error {
-			clusterID := chi.URLParam(r, "clusterID")
-			return ping(nc, clusterID)
+			linkID := chi.URLParam(r, "linkID")
+			return ping(nc, shared.CrossAccountNames{LinkID: linkID})
 		}))
 	})
 
