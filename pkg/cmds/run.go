@@ -62,6 +62,7 @@ func NewCmdRun() *cobra.Command {
 		linkID       string
 		metricsAddr  string
 		natsAddr     string
+		numThreads   = 5
 		natsCredFile string
 		probeAddr    string
 	)
@@ -105,10 +106,12 @@ func NewCmdRun() *cobra.Command {
 				os.Exit(1)
 			}
 
-			err = addSubscribers(nc, shared.CrossAccountNames{LinkID: linkID})
-			if err != nil {
-				setupLog.Error(err, "failed to setup proxy handler subscribers")
-				os.Exit(1)
+			for i := 0; i < numThreads; i++ {
+				err = addSubscribers(nc, shared.CrossAccountNames{LinkID: linkID})
+				if err != nil {
+					setupLog.Error(err, "failed to setup proxy handler subscribers")
+					os.Exit(1)
+				}
 			}
 
 			if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
@@ -148,6 +151,7 @@ func NewCmdRun() *cobra.Command {
 	cmd.Flags().StringVar(&linkID, "link-id", linkID, "Link id")
 	cmd.Flags().StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	cmd.Flags().StringVar(&natsAddr, "nats-addr", "", "The NATS server address (only used for development).")
+	cmd.Flags().IntVar(&numThreads, "nats-handler-count", numThreads, "The number of handler threads used to respond to nats requests.")
 	cmd.Flags().StringVar(&natsCredFile, "nats-credential-file", natsCredFile, "PATH to NATS credential file")
 	cmd.Flags().StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 
