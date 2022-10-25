@@ -266,13 +266,14 @@ func respond(in []byte) (*transport.R, *http.Request, *http.Response, error) {
 
 	// req.URL = nil
 	req.RequestURI = ""
-
+	timeout := r.Timeout
+	if timeout == 0 {
+		// Currently required for to break out pod log/exec streaming
+		timeout = 30 * time.Second
+	}
 	httpClient := &http.Client{
 		Transport: rt,
-		// Timeout:   r.Timeout,
-		// FIXME: Don't set a fixed timeout for all requests
-		// Currently required for pod log/exec streaming
-		Timeout: time.Second * 5,
+		Timeout:   timeout,
 	}
 	resp, err := httpClient.Do(req)
 	return &r, req, resp, err
