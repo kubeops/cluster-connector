@@ -365,6 +365,7 @@ install:
 	@cd ../installer; \
 	helm upgrade -i cluster-connector charts/cluster-connector --wait \
 		--namespace=$(KUBE_NAMESPACE) --create-namespace \
+		--set registryFQDN="" \
 		--set image.registry=$(REGISTRY) \
 		--set image.tag=$(TAG) \
 		--set imagePullPolicy=$(IMAGE_PULL_POLICY) \
