@@ -16,7 +16,7 @@ require (
 	go.bytebuilders.dev/license-verifier v0.12.2
 	go.wandrs.dev/binding v0.0.3-0.20220318024734-9a147576d26c
 	go.wandrs.dev/inject v0.0.1
-	golang.org/x/text v0.4.0
+	golang.org/x/text v0.7.0
 	gomodules.xyz/blobfs v0.1.11
 	gomodules.xyz/cert v1.5.0
 	gomodules.xyz/jsonpatch/v2 v2.2.0
@@ -201,12 +201,12 @@ require (
 	go.uber.org/zap v1.21.0 // indirect
 	go.wandrs.dev/http v0.0.1 // indirect
 	gocloud.dev v0.26.0 // indirect
-	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be // indirect
-	golang.org/x/net v0.1.0 // indirect
+	golang.org/x/crypto v0.6.0 // indirect
+	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/oauth2 v0.1.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.1.0 // indirect
-	golang.org/x/term v0.1.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/term v0.5.0 // indirect
 	golang.org/x/time v0.0.0-20220922220347-f3bd1da661af // indirect
 	golang.org/x/xerrors v0.0.0-20220609144429-65e65417b02f // indirect
 	gomodules.xyz/clock v0.0.0-20200817085942-06523dba733f // indirect
@@ -236,7 +236,7 @@ require (
 	kmodules.xyz/apiversion v0.2.0 // indirect
 	kmodules.xyz/apply v0.25.0 // indirect
 	kmodules.xyz/offshoot-api v0.25.0 // indirect
-	kmodules.xyz/resource-metadata v0.14.0 // indirect
+	kmodules.xyz/resource-metadata v0.15.0 // indirect
 	kmodules.xyz/resource-metrics v0.25.0 // indirect
 	kubepack.dev/preset v0.0.2 // indirect
 	oras.land/oras-go v1.2.0 // indirect
