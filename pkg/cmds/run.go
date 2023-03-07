@@ -249,10 +249,10 @@ func respond(in []byte) (*transport.R, *http.Request, *http.Response, error) {
 	// cache transport
 	rt := http.DefaultTransport
 	if r.TLS != nil {
-		dial := (&net.Dialer{
+		dial := &net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
-		}).DialContext
+		}
 
 		tlsconfig, err := r.TLS.TLSConfigFor()
 		if err != nil {
@@ -263,7 +263,7 @@ func respond(in []byte) (*transport.R, *http.Request, *http.Response, error) {
 			TLSHandshakeTimeout: 10 * time.Second,
 			TLSClientConfig:     tlsconfig,
 			MaxIdleConnsPerHost: idleConnsPerHost,
-			DialContext:         dial,
+			DialContext:         dial.DialContext,
 			DisableCompression:  r.DisableCompression,
 		})
 	}
@@ -306,12 +306,13 @@ func (cb *callback) Start(context.Context) error {
 	}
 	defer resp.Body.Close()
 
-	_, err = io.Copy(io.Discard, resp.Body)
+	data, err = io.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
 
 	if resp.StatusCode != http.StatusOK {
+		cb.log.Error(fmt.Errorf("%s", data), "callback failed")
 		return fmt.Errorf("callback failed with status code %s", resp.Status)
 	}
 

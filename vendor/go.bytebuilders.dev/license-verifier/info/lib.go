@@ -47,11 +47,8 @@ var (
 	ProductName string // This has been renamed to Features
 	ProductUID  string
 
-	prodDomain  = "byte.builders"
-	prodAddress = "https://" + prodDomain
-
-	qaDomain  = "appscode.ninja"
-	qaAddress = "https://" + qaDomain
+	prodDomain = "byte.builders"
+	qaDomain   = "appscode.ninja"
 
 	registrationAPIPath  = "api/v1/register"
 	LicenseIssuerAPIPath = "api/v1/license/issue"
@@ -122,15 +119,13 @@ func APIServerAddress(override ...string) (*url.URL, error) {
 		if err != nil {
 			return nil, err
 		}
-		if nu == prodAddress || nu == qaAddress {
-			return url.Parse(nu)
-		}
+		return url.Parse(nu)
 	}
 
 	if SkipLicenseVerification() {
-		return url.Parse(qaAddress)
+		return url.Parse("https://api." + qaDomain)
 	}
-	return url.Parse(prodAddress)
+	return url.Parse("https://api." + prodDomain)
 }
 
 func HostedEndpoint(u string) (bool, error) {
@@ -139,7 +134,15 @@ func HostedEndpoint(u string) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return nu == prodAddress || nu == qaAddress, nil
+	u2, err := url.Parse(nu)
+	if err != nil {
+		return false, err
+	}
+	host := u2.Hostname()
+	return host == prodDomain ||
+		host == qaDomain ||
+		strings.HasSuffix(host, "."+prodDomain) ||
+		strings.HasSuffix(host, "."+qaDomain), nil
 }
 
 func HostedDomain(d string) bool {
