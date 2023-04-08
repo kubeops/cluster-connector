@@ -75,8 +75,7 @@ func Inject(fn func(inject.Injector) error) func(next http.Handler) http.Handler
 			}
 
 			if err := fn(injector); err != nil {
-				ww := ResponseWriter(injector)
-				ww.APIError(err)
+				responseWriter(injector).APIError(err)
 				return
 			}
 			next.ServeHTTP(w, req)
@@ -202,7 +201,7 @@ func HandlerFunc(fn interface{}) http.HandlerFunc {
 			panic(fmt.Sprintf("failed to invoke %s, reason: %v", typ.String(), err))
 		}
 
-		ww := ResponseWriter(injector)
+		ww := responseWriter(injector)
 		switch len(results) {
 		case 0:
 			if !ww.Written() {
@@ -212,10 +211,6 @@ func HandlerFunc(fn interface{}) http.HandlerFunc {
 		case 1:
 			if firstReturnIsErr {
 				err, _ := results[0].Interface().(error)
-				if ww.Written() {
-					return
-				}
-
 				ww.APIError(err)
 				return
 			}
@@ -248,7 +243,7 @@ func HandlerFunc(fn interface{}) http.HandlerFunc {
 	}
 }
 
-func ResponseWriter(injector inject.Injector) httpw.ResponseWriter {
+func responseWriter(injector inject.Injector) httpw.ResponseWriter {
 	return injector.GetVal(inject.InterfaceOf((*httpw.ResponseWriter)(nil))).Interface().(httpw.ResponseWriter)
 }
 

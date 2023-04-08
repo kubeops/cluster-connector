@@ -29,9 +29,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"kubepack.dev/kubepack/apis/kubepack/v1alpha1"
 	"kubepack.dev/kubepack/pkg/lib"
 	"kubepack.dev/lib-helm/pkg/repo"
+	"x-helm.dev/apimachinery/apis/releases/v1alpha1"
 )
 
 func Generate(bs *lib.BlobStore, reg repo.IRegistry, cv kubeops.ClusterConnectorSpec) (*shared.Link, error) {
@@ -70,7 +70,7 @@ func NewOrder(url, name, version string, cc kubeops.ClusterConnectorSpec) (*v1al
 
 	return &v1alpha1.Order{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: v1alpha1.SchemeGroupVersion.String(),
+			APIVersion: v1alpha1.GroupVersion.String(),
 			Kind:       v1alpha1.ResourceKindOrder,
 		}, ObjectMeta: metav1.ObjectMeta{
 			Name:              name,

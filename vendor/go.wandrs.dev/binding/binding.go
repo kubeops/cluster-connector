@@ -32,7 +32,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var Validate = validator.New()
+var validate = validator.New()
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
@@ -80,7 +80,7 @@ func Bind(obj interface{}, ifacePtr ...interface{}) func(next http.Handler) http
 			}
 
 			if err != nil {
-				ww := ResponseWriter(injector)
+				ww := responseWriter(injector)
 				ww.APIError(err)
 				return
 			}
@@ -106,7 +106,7 @@ func Form(obj interface{}, ifacePtr ...interface{}) func(next http.Handler) http
 				panic("chi: register Injector middleware")
 			}
 			if err := bindForm(r, injector, obj, ifacePtr...); err != nil {
-				ww := ResponseWriter(injector)
+				ww := responseWriter(injector)
 				ww.APIError(err)
 				return
 			}
@@ -155,7 +155,7 @@ func MultipartForm(obj interface{}, ifacePtr ...interface{}) func(next http.Hand
 				panic("chi: register Injector middleware")
 			}
 			if err := bindMultipartForm(r, injector, obj, ifacePtr...); err != nil {
-				ww := ResponseWriter(injector)
+				ww := responseWriter(injector)
 				ww.APIError(err)
 				return
 			}
@@ -212,7 +212,7 @@ func JSON(obj interface{}, ifacePtr ...interface{}) func(next http.Handler) http
 				panic("chi: register Injector middleware")
 			}
 			if err := bindJSON(r, injector, obj, ifacePtr...); err != nil {
-				ww := ResponseWriter(injector)
+				ww := responseWriter(injector)
 				ww.APIError(err)
 				return
 			}
@@ -266,10 +266,10 @@ func check(val reflect.Value) error {
 	}
 
 	if val.Kind() == reflect.Struct {
-		return Validate.Struct(val.Interface())
+		return validate.Struct(val.Interface())
 	} else if val.Kind() == reflect.Slice {
 		for i := 0; i < val.Len(); i++ {
-			if err := Validate.Struct(val.Index(i).Interface()); err != nil {
+			if err := validate.Struct(val.Index(i).Interface()); err != nil {
 				return err
 			}
 		}
