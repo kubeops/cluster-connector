@@ -1,4 +1,4 @@
-// Copyright 2012-2022 The NATS Authors
+// Copyright 2012-2023 The NATS Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -47,7 +47,7 @@ import (
 
 // Default Constants
 const (
-	Version                   = "1.22.1"
+	Version                   = "1.25.0"
 	DefaultURL                = "nats://127.0.0.1:4222"
 	DefaultPort               = 4222
 	DefaultMaxReconnect       = 60
@@ -139,10 +139,6 @@ var (
 	ErrMaxConnectionsExceeded = errors.New("nats: server maximum connections exceeded")
 	ErrConnectionNotTLS       = errors.New("nats: connection is not tls")
 )
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
 
 // GetDefaultOptions returns default configuration options for the client.
 func GetDefaultOptions() Options {
@@ -475,6 +471,9 @@ type Options struct {
 	// IgnoreAuthErrorAbort - if set to true, client opts out of the default connect behavior of aborting
 	// subsequent reconnect attempts if server returns the same auth error twice (regardless of reconnect policy).
 	IgnoreAuthErrorAbort bool
+
+	// SkipHostLookup skips the DNS lookup for the server hostname.
+	SkipHostLookup bool
 }
 
 const (
@@ -839,7 +838,7 @@ func RootCAs(file ...string) Option {
 		for _, f := range file {
 			rootPEM, err := os.ReadFile(f)
 			if err != nil || rootPEM == nil {
-				return fmt.Errorf("nats: error loading or parsing rootCA file: %v", err)
+				return fmt.Errorf("nats: error loading or parsing rootCA file: %w", err)
 			}
 			ok := pool.AppendCertsFromPEM(rootPEM)
 			if !ok {
@@ -861,11 +860,11 @@ func ClientCert(certFile, keyFile string) Option {
 	return func(o *Options) error {
 		cert, err := tls.LoadX509KeyPair(certFile, keyFile)
 		if err != nil {
-			return fmt.Errorf("nats: error loading client certificate: %v", err)
+			return fmt.Errorf("nats: error loading client certificate: %w", err)
 		}
 		cert.Leaf, err = x509.ParseCertificate(cert.Certificate[0])
 		if err != nil {
-			return fmt.Errorf("nats: error parsing client certificate: %v", err)
+			return fmt.Errorf("nats: error parsing client certificate: %w", err)
 		}
 		if o.TLSConfig == nil {
 			o.TLSConfig = &tls.Config{MinVersion: tls.VersionTLS12}
@@ -958,7 +957,7 @@ func MaxPingsOutstanding(max int) Option {
 }
 
 // ReconnectBufSize sets the buffer size of messages kept while busy reconnecting.
-// Defaults to 8388608 bytes (8MB).
+// Defaults to 8388608 bytes (8MB).  It can be disabled by setting it to -1.
 func ReconnectBufSize(size int) Option {
 	return func(o *Options) error {
 		o.ReconnectBufSize = size
@@ -1113,7 +1112,7 @@ func UserJWTAndSeed(jwt string, seed string) Option {
 	sigCB := func(nonce []byte) ([]byte, error) {
 		kp, err := nkeys.FromSeed([]byte(seed))
 		if err != nil {
-			return nil, fmt.Errorf("unable to extract key pair from seed: %v", err)
+			return nil, fmt.Errorf("unable to extract key pair from seed: %w", err)
 		}
 		// Wipe our key on exit.
 		defer kp.Wipe()
@@ -1136,6 +1135,12 @@ func UserJWT(userCB UserJWTHandler, sigCB SignatureHandler) Option {
 		if sigCB == nil {
 			return ErrUserButNoSigCB
 		}
+		// Smoke test the user callback to ensure it is setup properly
+		// when processing options.
+		if _, err := userCB(); err != nil {
+			return err
+		}
+
 		o.UserJWT = userCB
 		o.SignatureCB = sigCB
 		return nil
@@ -1258,6 +1263,14 @@ func CustomInboxPrefix(p string) Option {
 func IgnoreAuthErrorAbort() Option {
 	return func(o *Options) error {
 		o.IgnoreAuthErrorAbort = true
+		return nil
+	}
+}
+
+// SkipHostLookup is an Option to skip the host lookup when connecting to a server.
+func SkipHostLookup() Option {
+	return func(o *Options) error {
+		o.SkipHostLookup = true
 		return nil
 	}
 }
@@ -1895,7 +1908,7 @@ func (nc *Conn) createConn() (err error) {
 	hosts := []string{}
 	u := nc.current.url
 
-	if net.ParseIP(u.Hostname()) == nil {
+	if !nc.Opts.SkipHostLookup && net.ParseIP(u.Hostname()) == nil {
 		addrs, _ := net.LookupHost(u.Hostname())
 		for _, addr := range addrs {
 			hosts = append(hosts, net.JoinHostPort(addr, u.Port()))
@@ -2382,7 +2395,7 @@ func (nc *Conn) connectProto() (string, error) {
 		}
 		sigraw, err := o.SignatureCB([]byte(nc.info.Nonce))
 		if err != nil {
-			return _EMPTY_, fmt.Errorf("error signing nonce: %v", err)
+			return _EMPTY_, fmt.Errorf("error signing nonce: %w", err)
 		}
 		sig = base64.RawURLEncoding.EncodeToString(sigraw)
 	}
@@ -3553,7 +3566,8 @@ const (
 
 // decodeHeadersMsg will decode and headers.
 func decodeHeadersMsg(data []byte) (Header, error) {
-	tp := textproto.NewReader(bufio.NewReader(bytes.NewReader(data)))
+	br := bufio.NewReaderSize(bytes.NewReader(data), 128)
+	tp := textproto.NewReader(br)
 	l, err := tp.ReadLine()
 	if err != nil || len(l) < hdrPreEnd || l[:hdrPreEnd] != hdrLine[:hdrPreEnd] {
 		return nil, ErrBadHeaderMsg
@@ -5432,12 +5446,12 @@ func wipeSlice(buf []byte) {
 func userFromFile(userFile string) (string, error) {
 	path, err := expandPath(userFile)
 	if err != nil {
-		return _EMPTY_, fmt.Errorf("nats: %v", err)
+		return _EMPTY_, fmt.Errorf("nats: %w", err)
 	}
 
 	contents, err := os.ReadFile(path)
 	if err != nil {
-		return _EMPTY_, fmt.Errorf("nats: %v", err)
+		return _EMPTY_, fmt.Errorf("nats: %w", err)
 	}
 	defer wipeSlice(contents)
 	return nkeys.ParseDecoratedJWT(contents)
@@ -5486,7 +5500,7 @@ func expandPath(p string) (string, error) {
 func nkeyPairFromSeedFile(seedFile string) (nkeys.KeyPair, error) {
 	contents, err := os.ReadFile(seedFile)
 	if err != nil {
-		return nil, fmt.Errorf("nats: %v", err)
+		return nil, fmt.Errorf("nats: %w", err)
 	}
 	defer wipeSlice(contents)
 	return nkeys.ParseDecoratedNKey(contents)
@@ -5497,7 +5511,7 @@ func nkeyPairFromSeedFile(seedFile string) (nkeys.KeyPair, error) {
 func sigHandler(nonce []byte, seedFile string) ([]byte, error) {
 	kp, err := nkeyPairFromSeedFile(seedFile)
 	if err != nil {
-		return nil, fmt.Errorf("unable to extract key pair from file %q: %v", seedFile, err)
+		return nil, fmt.Errorf("unable to extract key pair from file %q: %w", seedFile, err)
 	}
 	// Wipe our key on exit.
 	defer kp.Wipe()
