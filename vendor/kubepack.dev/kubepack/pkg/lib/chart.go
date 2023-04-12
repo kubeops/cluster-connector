@@ -29,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	kmapi "kmodules.xyz/client-go/api/v1"
 	yamllib "sigs.k8s.io/yaml"
 	releasesapi "x-helm.dev/apimachinery/apis/releases/v1alpha1"
 	"x-helm.dev/apimachinery/apis/shared"
@@ -75,16 +76,18 @@ func GetPackageDescriptor(pkgChart *chart.Chart) releasesapi.PackageDescriptor {
 	return out
 }
 
-func CreatePackageView(url string, chrt *chart.Chart) (*releasesapi.PackageView, error) {
+func CreatePackageView(srcRef kmapi.TypedObjectReference, chrt *chart.Chart) (*releasesapi.PackageView, error) {
 	p := releasesapi.PackageView{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: releasesapi.GroupVersion.String(),
 			Kind:       "PackageView",
 		},
 		PackageMeta: releasesapi.PackageMeta{
-			Name:              chrt.Name(),
-			URL:               url,
-			Version:           chrt.Metadata.Version,
+			ChartSourceRef: releasesapi.ChartSourceRef{
+				Name:      chrt.Name(),
+				Version:   chrt.Metadata.Version,
+				SourceRef: srcRef,
+			},
 			PackageDescriptor: GetPackageDescriptor(chrt),
 		},
 	}

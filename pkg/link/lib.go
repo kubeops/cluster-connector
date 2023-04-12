@@ -29,9 +29,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	kmapi "kmodules.xyz/client-go/api/v1"
 	"kubepack.dev/kubepack/pkg/lib"
 	"kubepack.dev/lib-helm/pkg/repo"
-	"x-helm.dev/apimachinery/apis/releases/v1alpha1"
+	releasesapi "x-helm.dev/apimachinery/apis/releases/v1alpha1"
 )
 
 func Generate(bs *lib.BlobStore, reg repo.IRegistry, cv kubeops.ClusterConnectorSpec) (*shared.Link, error) {
@@ -58,7 +59,7 @@ func NewBlobStore() (*lib.BlobStore, error) {
 	}, nil
 }
 
-func NewOrder(url, name, version string, cc kubeops.ClusterConnectorSpec) (*v1alpha1.Order, error) {
+func NewOrder(url, name, version string, cc kubeops.ClusterConnectorSpec) (*releasesapi.Order, error) {
 	if len(cc.LinkID) == 0 {
 		cc.LinkID = xid.New().String()
 	}
@@ -68,22 +69,27 @@ func NewOrder(url, name, version string, cc kubeops.ClusterConnectorSpec) (*v1al
 		return nil, err
 	}
 
-	return &v1alpha1.Order{
+	return &releasesapi.Order{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: v1alpha1.GroupVersion.String(),
-			Kind:       v1alpha1.ResourceKindOrder,
+			APIVersion: releasesapi.GroupVersion.String(),
+			Kind:       releasesapi.ResourceKindOrder,
 		}, ObjectMeta: metav1.ObjectMeta{
 			Name:              name,
 			UID:               types.UID(cc.LinkID), // using ulids instead of UUID
 			CreationTimestamp: metav1.NewTime(time.Now()),
 		},
-		Spec: v1alpha1.OrderSpec{
-			Packages: []v1alpha1.PackageSelection{
+		Spec: releasesapi.OrderSpec{
+			Packages: []releasesapi.PackageSelection{
 				{
-					Chart: &v1alpha1.ChartSelection{
-						ChartRef: v1alpha1.ChartRef{
-							URL:  url,
+					Chart: &releasesapi.ChartSelection{
+						ChartRef: releasesapi.ChartRef{
 							Name: name,
+							SourceRef: kmapi.TypedObjectReference{
+								APIGroup:  releasesapi.SourceGroupLegacy,
+								Kind:      releasesapi.SourceKindLegacy,
+								Namespace: "",
+								Name:      url,
+							},
 						},
 						Version:     version,
 						ReleaseName: name,
@@ -118,7 +124,7 @@ func generatePatch(cc kubeops.ClusterConnectorSpec) ([]byte, error) {
 	return json.MarshalIndent(ops, "", "  ")
 }
 
-func GenerateScripts(bs *lib.BlobStore, reg repo.IRegistry, order *v1alpha1.Order) (map[string]string, error) {
+func GenerateScripts(bs *lib.BlobStore, reg repo.IRegistry, order *releasesapi.Order) (map[string]string, error) {
 	scriptsYAML, err := lib.GenerateYAMLScript(bs, reg, *order, lib.DisableApplicationCRD, lib.OsIndependentScript)
 	if err != nil {
 		return nil, err
