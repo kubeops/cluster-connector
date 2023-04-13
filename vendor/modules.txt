@@ -1831,10 +1831,10 @@ kmodules.xyz/resource-metrics/kubedb.com/v1alpha2
 ## explicit; go 1.18
 kubeops.dev/installer/apis/installer
 kubeops.dev/installer/apis/installer/v1alpha1
-# kubepack.dev/kubepack v0.6.2
+# kubepack.dev/kubepack v0.6.3
 ## explicit; go 1.18
 kubepack.dev/kubepack/pkg/lib
-# kubepack.dev/lib-helm v0.6.2
+# kubepack.dev/lib-helm v0.6.3
 ## explicit; go 1.18
 kubepack.dev/lib-helm/pkg/action
 kubepack.dev/lib-helm/pkg/chart
@@ -2018,7 +2018,7 @@ sigs.k8s.io/structured-merge-diff/v4/value
 # sigs.k8s.io/yaml v1.3.0
 ## explicit; go 1.12
 sigs.k8s.io/yaml
-# x-helm.dev/apimachinery v0.0.6
+# x-helm.dev/apimachinery v0.0.7
 ## explicit; go 1.19
 x-helm.dev/apimachinery/apis
 x-helm.dev/apimachinery/apis/charts/v1alpha1

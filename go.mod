@@ -31,10 +31,10 @@ require (
 	kmodules.xyz/client-go v0.25.21
 	kmodules.xyz/custom-resources v0.25.1
 	kubeops.dev/installer v0.0.0-20230412211055-cf0e217651ec
-	kubepack.dev/kubepack v0.6.2
-	kubepack.dev/lib-helm v0.6.2
+	kubepack.dev/kubepack v0.6.3
+	kubepack.dev/lib-helm v0.6.3
 	sigs.k8s.io/controller-runtime v0.13.1
-	x-helm.dev/apimachinery v0.0.6
+	x-helm.dev/apimachinery v0.0.7
 )
 
 require (
