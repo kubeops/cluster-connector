@@ -28,13 +28,13 @@ require (
 	k8s.io/cli-runtime v0.25.3
 	k8s.io/client-go v0.25.3
 	k8s.io/klog/v2 v2.80.1
-	kmodules.xyz/client-go v0.25.21
+	kmodules.xyz/client-go v0.25.22
 	kmodules.xyz/custom-resources v0.25.1
-	kubeops.dev/installer v0.0.0-20230412211055-cf0e217651ec
-	kubepack.dev/kubepack v0.6.3
-	kubepack.dev/lib-helm v0.6.3
+	kubeops.dev/installer v0.0.0-20230505165354-fd186f406352
+	kubepack.dev/kubepack v0.7.0
+	kubepack.dev/lib-helm v0.7.0
 	sigs.k8s.io/controller-runtime v0.13.1
-	x-helm.dev/apimachinery v0.0.7
+	x-helm.dev/apimachinery v0.0.9
 )
 
 require (
@@ -268,4 +268,4 @@ replace github.com/imdario/mergo => github.com/imdario/mergo v0.3.6
 
 replace github.com/Masterminds/sprig/v3 => github.com/gomodules/sprig/v3 v3.2.3-0.20220405051441-0a8a99bac1b8
 
-replace helm.sh/helm/v3 => github.com/x-helm/helm/v3 v3.10.2-0.20230408184307-59c40cc34e6f
+replace helm.sh/helm/v3 => github.com/x-helm/helm/v3 v3.10.2-0.20230503230011-a8f5ce951c95

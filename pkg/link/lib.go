@@ -125,12 +125,12 @@ func generatePatch(cc kubeops.ClusterConnectorSpec) ([]byte, error) {
 }
 
 func GenerateScripts(bs *lib.BlobStore, reg repo.IRegistry, order *releasesapi.Order) (map[string]string, error) {
-	scriptsYAML, err := lib.GenerateYAMLScript(bs, reg, *order, lib.DisableApplicationCRD, lib.OsIndependentScript)
+	scriptsYAML, err := lib.GenerateYAMLScript(bs, reg, *order, lib.DisableAppReleaseCRD, lib.OsIndependentScript)
 	if err != nil {
 		return nil, err
 	}
 
-	scriptsHelm3, err := lib.GenerateHelm3Script(bs, reg, *order, lib.DisableApplicationCRD, lib.OsIndependentScript)
+	scriptsHelm3, err := lib.GenerateHelm3Script(bs, reg, *order, lib.DisableAppReleaseCRD, lib.OsIndependentScript)
 	if err != nil {
 		return nil, err
 	}

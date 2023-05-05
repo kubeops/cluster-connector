@@ -876,27 +876,27 @@ func (x *PermissionChecker) Result() (map[authorization.ResourceAttributes]*Reso
 	return x.attrs, true
 }
 
-type ApplicationCRDRegPrinter struct {
+type AppReleaseCRDRegPrinter struct {
 	W io.Writer
 }
 
-func (x *ApplicationCRDRegPrinter) Do() error {
-	_, err := fmt.Fprintln(x.W, "kubectl apply -f https://github.com/kubernetes-sigs/application/raw/c8e2959e57a02b3877b394984a288f9178977d8b/config/crd/bases/app.k8s.io_applications.yaml")
+func (x *AppReleaseCRDRegPrinter) Do() error {
+	_, err := fmt.Fprintln(x.W, "kubectl apply -f https://github.com/x-helm/apimachinery/raw/master/crds/drivers.x-helm.dev_appreleases.yaml")
 	if err != nil {
 		return err
 	}
-	_, err = fmt.Fprintln(x.W, "kubectl wait --for=condition=Established crds/applications.app.k8s.io --timeout=5m")
+	_, err = fmt.Fprintln(x.W, "kubectl wait --for=condition=Established crds/appreleases.drivers.x-helm.dev --timeout=5m")
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-type ApplicationCRDRegistrar struct {
+type AppReleaseCRDRegistrar struct {
 	Config *rest.Config
 }
 
-func (x *ApplicationCRDRegistrar) Do() error {
+func (x *AppReleaseCRDRegistrar) Do() error {
 	apiextClient, err := crd_cs.NewForConfig(x.Config)
 	if err != nil {
 		return err
@@ -967,13 +967,13 @@ type ApplicationGenerator struct {
 
 	KubeVersion string
 
-	components   map[metav1.GroupKind]struct{}
+	components   map[metav1.GroupVersionKind]struct{}
 	commonLabels map[string]string
 }
 
 func (x *ApplicationGenerator) Do() error {
 	if x.components == nil {
-		x.components = make(map[metav1.GroupKind]struct{})
+		x.components = make(map[metav1.GroupVersionKind]struct{})
 	}
 	if x.commonLabels == nil {
 		x.commonLabels = make(map[string]string)
@@ -1123,7 +1123,7 @@ func (x *ApplicationGenerator) Do() error {
 			}
 		}
 	}
-	x.components, x.commonLabels, err = parser.ExtractComponents(manifestDoc.Bytes())
+	x.components, x.commonLabels, err = parser.ExtractComponentGVKs(manifestDoc.Bytes())
 	return err
 }
 
@@ -1157,23 +1157,20 @@ func (x *ApplicationGenerator) Result() *driversapi.AppRelease {
 				Version:     x.chrt.Metadata.AppVersion,
 				Owners:      nil, // TODO: Add the user email who is installing this app
 			},
-			AddOwnerRef:   false,
-			Info:          nil,
-			AssemblyPhase: driversapi.Ready,
 		},
 	}
 
-	gks := make([]metav1.GroupKind, 0, len(x.components))
+	gvks := make([]metav1.GroupVersionKind, 0, len(x.components))
 	for gk := range x.components {
-		gks = append(gks, gk)
+		gvks = append(gvks, gk)
 	}
-	sort.Slice(gks, func(i, j int) bool {
-		if gks[i].Group == gks[j].Group {
-			return gks[i].Kind < gks[j].Kind
+	sort.Slice(gvks, func(i, j int) bool {
+		if gvks[i].Group == gvks[j].Group {
+			return gvks[i].Kind < gvks[j].Kind
 		}
-		return gks[i].Group < gks[j].Group
+		return gvks[i].Group < gvks[j].Group
 	})
-	b.Spec.ComponentGroupKinds = gks
+	b.Spec.Components = gvks
 
 	if len(x.commonLabels) > 0 {
 		b.Spec.Selector = &metav1.LabelSelector{
