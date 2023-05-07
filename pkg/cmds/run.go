@@ -160,7 +160,8 @@ func NewCmdRun() *cobra.Command {
 
 var pool = sync.Pool{
 	New: func() interface{} {
-		return new(bytes.Buffer)
+		// https://docs.nats.io/reference/faq#is-there-a-message-size-limitation-in-nats
+		return bufio.NewWriterSize(nil, 8*1024) // 8 KB
 	},
 }
 
@@ -211,24 +212,68 @@ func addSubscribers(nc *nats.Conn, names shared.SubjectNames) error {
 			}
 		}
 
-		buf := pool.Get().(*bytes.Buffer)
-		defer pool.Put(buf)
-		buf.Reset()
-
-		respMsg := &nats.Msg{
-			Subject: msg.Reply,
+		ncw := &natsWriter{
+			nc:   nc,
+			subj: msg.Reply,
 		}
-		if err := resp.Write(buf); err != nil { // WriteProxy
-			respMsg.Data = []byte(err.Error())
+
+		w := pool.Get().(*bufio.Writer)
+		defer pool.Put(w)
+		w.Reset(ncw)
+
+		err = resp.Write(w)
+		ncw.final = true
+		if err != nil {
+			_, _ = ncw.WriteError(err)
+			return
+		}
+		if w.Buffered() > 0 {
+			if e2 := w.Flush(); e2 != nil {
+				klog.ErrorS(e2, "failed to flush buffer")
+			}
 		} else {
-			respMsg.Data = buf.Bytes()
-		}
-
-		if err := msg.RespondMsg(respMsg); err != nil {
-			klog.ErrorS(err, "failed to respond to proxy request")
+			if _, e2 := ncw.Write([]byte("\n")); e2 != nil {
+				klog.ErrorS(e2, "failed to close buffer")
+			}
 		}
 	})
 	return err
+}
+
+type natsWriter struct {
+	nc    *nats.Conn
+	subj  string
+	final bool
+}
+
+var _ io.Writer = &natsWriter{}
+
+func (w *natsWriter) Write(data []byte) (int, error) {
+	h := nats.Header{}
+	if w.final {
+		h.Set(transport.HeaderKeyDone, "")
+	}
+	return len(data), w.nc.PublishMsg(&nats.Msg{
+		Subject: w.subj,
+		Data:    data,
+		Header:  h,
+	})
+}
+
+func (w *natsWriter) WriteError(err error) (int, error) {
+	h := nats.Header{}
+	if w.final {
+		if err == nil {
+			h.Set(transport.HeaderKeyDone, "")
+		} else {
+			h.Set(transport.HeaderKeyDone, err.Error())
+		}
+	}
+	return 0, w.nc.PublishMsg(&nats.Msg{
+		Subject: w.subj,
+		Data:    nil,
+		Header:  h,
+	})
 }
 
 // k8s.io/client-go/transport/cache.go

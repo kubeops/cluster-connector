@@ -21,7 +21,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"sync"
@@ -36,6 +38,8 @@ import (
 const (
 	natsConnectionTimeout       = 350 * time.Millisecond
 	natsConnectionRetryInterval = 100 * time.Millisecond
+
+	HeaderKeyDone = "Done"
 )
 
 // NewConnection creates a new NATS connection
@@ -185,15 +189,11 @@ func (rt *NatsTransport) RoundTrip(r *http.Request) (*http.Response, error) {
 		return nil, err
 	}
 
-	resp, err := Proxy(rt.Conn, rt.Names, buf.Bytes(), timeout)
-	if err != nil {
-		return nil, err
-	}
-	return http.ReadResponse(bufio.NewReader(bytes.NewReader(resp)), r)
+	return Proxy(r, rt.Conn, rt.Names, buf.Bytes(), timeout)
 }
 
 // SEE: https://github.com/nats-io/nats.docs/blob/master/using-nats/developing-with-nats/sending/replyto.md#including-a-reply-subject
-func Proxy(nc *nats.Conn, names shared.SubjectNames, data []byte, timeout time.Duration) ([]byte, error) {
+func Proxy(req *http.Request, nc *nats.Conn, names shared.SubjectNames, data []byte, timeout time.Duration) (*http.Response, error) {
 	hubRespSub, edgeRespSub := names.ProxyResponseSubjects()
 
 	// Listen for a single response
@@ -209,16 +209,42 @@ func Proxy(nc *nats.Conn, names shared.SubjectNames, data []byte, timeout time.D
 		return nil, err
 	}
 
-	// Read the reply
-	msg, err := sub.NextMsg(timeout)
-	if err != nil {
-		return nil, err
-	}
+	r, w := io.Pipe()
+	go func() {
+		var e2 error
 
-	err = sub.Unsubscribe()
-	if err != nil {
-		return nil, err
-	}
+		defer func() {
+			if e2 != nil {
+				_ = w.CloseWithError(e2)
+			} else {
+				_ = w.Close()
+			}
+			_ = sub.Unsubscribe()
+		}()
 
-	return msg.Data, nil
+		for {
+			var msg *nats.Msg
+			msg, e2 = sub.NextMsg(timeout)
+			if e2 != nil {
+				if e2 == nats.ErrTimeout {
+					e2 = nil
+					continue // ignore ErrTimeout
+				}
+				break
+			}
+
+			_, e2 = w.Write(msg.Data)
+			if e2 != nil {
+				break
+			}
+			if results, ok := msg.Header[HeaderKeyDone]; ok {
+				if results[0] != "" {
+					e2 = errors.New(results[0])
+				}
+				break
+			}
+		}
+	}()
+
+	return http.ReadResponse(bufio.NewReader(r), req)
 }
