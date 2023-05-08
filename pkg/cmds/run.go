@@ -232,7 +232,7 @@ func addSubscribers(nc *nats.Conn, names shared.SubjectNames) error {
 				klog.ErrorS(e2, "failed to flush buffer")
 			}
 		} else {
-			if _, e2 := ncw.Write([]byte("\n")); e2 != nil {
+			if _, e2 := ncw.Write(nil); e2 != nil {
 				klog.ErrorS(e2, "failed to close buffer")
 			}
 		}
