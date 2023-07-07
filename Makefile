@@ -363,6 +363,7 @@ PLATFORM_TOKEN   ?= $(PLATFORM_TOKEN)
 .PHONY: install
 install:
 	@cd ../installer; \
+	kubectl create ns $(KUBE_NAMESPACE) || true; \
 	kubectl label ns $(KUBE_NAMESPACE) pod-security.kubernetes.io/enforce=restricted; \
 	helm upgrade -i cluster-connector charts/cluster-connector --wait \
 		--namespace=$(KUBE_NAMESPACE) --create-namespace \
