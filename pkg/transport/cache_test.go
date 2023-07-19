@@ -23,6 +23,8 @@ import (
 	"net/http"
 	"testing"
 
+	"kubeops.dev/cluster-connector/pkg/shared"
+
 	"k8s.io/client-go/transport"
 )
 
@@ -38,7 +40,7 @@ func TestTLSConfigKey(t *testing.T) {
 	}
 	for nameA, valueA := range identicalConfigurations {
 		for nameB, valueB := range identicalConfigurations {
-			keyA, canCache, err := tlsConfigKey(valueA)
+			keyA, canCache, err := tlsConfigKey(valueA, shared.CrossAccountNames{})
 			if err != nil {
 				t.Errorf("Unexpected error for %q: %v", nameA, err)
 				continue
@@ -47,7 +49,7 @@ func TestTLSConfigKey(t *testing.T) {
 				t.Errorf("Unexpected canCache=false")
 				continue
 			}
-			keyB, canCache, err := tlsConfigKey(valueB)
+			keyB, canCache, err := tlsConfigKey(valueB, shared.CrossAccountNames{})
 			if err != nil {
 				t.Errorf("Unexpected error for %q: %v", nameB, err)
 				continue
@@ -141,12 +143,12 @@ func TestTLSConfigKey(t *testing.T) {
 	}
 	for nameA, valueA := range uniqueConfigurations {
 		for nameB, valueB := range uniqueConfigurations {
-			keyA, canCacheA, err := tlsConfigKey(valueA)
+			keyA, canCacheA, err := tlsConfigKey(valueA, shared.CrossAccountNames{})
 			if err != nil {
 				t.Errorf("Unexpected error for %q: %v", nameA, err)
 				continue
 			}
-			keyB, canCacheB, err := tlsConfigKey(valueB)
+			keyB, canCacheB, err := tlsConfigKey(valueB, shared.CrossAccountNames{})
 			if err != nil {
 				t.Errorf("Unexpected error for %q: %v", nameB, err)
 				continue
