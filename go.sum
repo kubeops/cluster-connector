@@ -1044,8 +1044,8 @@ go.bytebuilders.dev/audit v0.0.27 h1:d9kYia/S17JhkauRXw/ERXAtfuujkGDGjpeQcAurmkY
 go.bytebuilders.dev/audit v0.0.27/go.mod h1:88UkSOMKSKShknE5c6V1HtBHCXArIO/LHio61OSzaww=
 go.bytebuilders.dev/license-proxyserver v0.0.2 h1:FIoldUxUF0kJbRCuA0dts83SUQOfWpVEJUB64+GKnBo=
 go.bytebuilders.dev/license-proxyserver v0.0.2/go.mod h1:iMJbPzDf2R2EJOZwRi7ziEr5DBMfT9Cm75/XfPb/QnU=
-go.bytebuilders.dev/license-verifier v0.13.0 h1:VyI8XydrZbzClSk45rPcjz9dVhyL0EfpWW4T08SXMGo=
-go.bytebuilders.dev/license-verifier v0.13.0/go.mod h1:PTTlWgokzoisBezn2zt+JeGkhTJZ0flvLzdhHVBy86M=
+go.bytebuilders.dev/license-verifier v0.13.2 h1:wV1ynl+GR+zKb3dh19WEzuC0uzTdiSGgVg9G78Nh4XU=
+go.bytebuilders.dev/license-verifier v0.13.2/go.mod h1:PTTlWgokzoisBezn2zt+JeGkhTJZ0flvLzdhHVBy86M=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/etcd/api/v3 v3.5.0/go.mod h1:cbVKeC6lCfl7j/8jBhAK6aIYO9XOjdptoxU/nLQcPvs=
 go.etcd.io/etcd/api/v3 v3.6.0-alpha.0 h1:se+XckWlVTTfwjZSsAZJ2zGPzmIMq3j7fKBCmHoB9UA=

@@ -13,7 +13,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/unrolled/render v1.6.0
 	go.bytebuilders.dev/audit v0.0.27
-	go.bytebuilders.dev/license-verifier v0.13.0
+	go.bytebuilders.dev/license-verifier v0.13.2
 	go.wandrs.dev/binding v0.0.2
 	go.wandrs.dev/inject v0.0.1
 	golang.org/x/text v0.9.0
