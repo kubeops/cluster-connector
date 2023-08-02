@@ -52,6 +52,7 @@ type ScannerSpec struct {
 	RegistryFQDN     string          `json:"registryFQDN"`
 	App              Container       `json:"app"`
 	Etcd             EtcdContainer   `json:"etcd"`
+	Kine             Container       `json:"kine"`
 	Cacher           CacherContainer `json:"cacher"`
 	ImagePullPolicy  string          `json:"imagePullPolicy"`
 	//+optional
@@ -79,7 +80,7 @@ type ScannerSpec struct {
 	StorageClass       LocalObjectReference     `json:"storageClass"`
 	Persistence        Persistence              `json:"persistence"`
 	ServiceAccount     ServiceAccountSpec       `json:"serviceAccount"`
-	Apiserver          ApiserverSpec            `json:"apiserver"`
+	Apiserver          ScannerserverSpec        `json:"apiserver"`
 	Monitoring         Monitoring               `json:"monitoring"`
 	Dashboard          GrafanaDashboard         `json:"dashboard"`
 	Grafana            ObjectReference          `json:"grafana"`
@@ -88,8 +89,14 @@ type ScannerSpec struct {
 	License string `json:"license"`
 
 	// +optional
-	ScanRequestTTLAfterFinished metav1.Duration `json:"scanRequestTTLAfterFinished"`
-	ScanReportTTLAfterOutdated  metav1.Duration `json:"scanReportTTLAfterOutdated"`
+	ScanRequestTTLAfterFinished metav1.Duration  `json:"scanRequestTTLAfterFinished"`
+	ScanReportTTLAfterOutdated  metav1.Duration  `json:"scanReportTTLAfterOutdated"`
+	Workspace                   ScannerWorkspace `json:"workspace"`
+}
+
+type ScannerserverSpec struct {
+	ApiserverSpec `json:",inline"`
+	DB            ApiserverDB `json:"db"`
 }
 
 type GrafanaDashboard struct {
@@ -136,6 +143,10 @@ type NatsAuth struct {
 type ScannerNATS struct {
 	Addr string   `json:"addr"`
 	Auth NatsAuth `json:"auth"`
+}
+
+type ScannerWorkspace struct {
+	Namespace string `json:"namespace"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

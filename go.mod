@@ -19,7 +19,7 @@ require (
 	golang.org/x/text v0.9.0
 	gomodules.xyz/blobfs v0.1.14
 	gomodules.xyz/cert v1.5.0
-	gomodules.xyz/jsonpatch/v2 v2.2.0
+	gomodules.xyz/jsonpatch/v2 v2.3.0
 	gomodules.xyz/logs v0.0.6
 	gomodules.xyz/runtime v0.3.0
 	gomodules.xyz/x v0.0.14
@@ -28,11 +28,11 @@ require (
 	k8s.io/cli-runtime v0.25.3
 	k8s.io/client-go v0.25.3
 	k8s.io/klog/v2 v2.80.1
-	kmodules.xyz/client-go v0.25.22
+	kmodules.xyz/client-go v0.25.28
 	kmodules.xyz/custom-resources v0.25.1
-	kubeops.dev/installer v0.0.0-20230505165354-fd186f406352
-	kubepack.dev/kubepack v0.7.0
-	kubepack.dev/lib-helm v0.7.0
+	kubeops.dev/installer v0.0.0-20230731223618-221bbb7c5a77
+	kubepack.dev/kubepack v0.7.1-0.20230525102401-a03c57bc421a
+	kubepack.dev/lib-helm v0.7.1
 	sigs.k8s.io/controller-runtime v0.13.1
 	x-helm.dev/apimachinery v0.0.9
 )
@@ -219,7 +219,7 @@ require (
 	gocloud.dev v0.26.0 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
-	golang.org/x/oauth2 v0.5.0 // indirect
+	golang.org/x/oauth2 v0.7.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.7.0 // indirect
 	golang.org/x/term v0.7.0 // indirect
@@ -253,8 +253,8 @@ require (
 	kmodules.xyz/apiversion v0.2.0 // indirect
 	kmodules.xyz/apply v0.25.0 // indirect
 	kmodules.xyz/offshoot-api v0.25.0 // indirect
-	kmodules.xyz/resource-metadata v0.16.2 // indirect
-	kmodules.xyz/resource-metrics v0.25.0 // indirect
+	kmodules.xyz/resource-metadata v0.17.4 // indirect
+	kmodules.xyz/resource-metrics v0.25.2 // indirect
 	oras.land/oras-go v1.2.0 // indirect
 	sigs.k8s.io/cli-utils v0.34.0 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
