@@ -29,10 +29,10 @@ spec:
             apiGroup: source.toolkit.fluxcd.io
             kind: HelmRepository
             name: bytebuilders-ui
-          version: v0.4.15
+          version: sha256:bebcc5c6677dad538f79758024e17d20608adca53249304a742ef142bb05a32c
         flow: standalone-edit
         icons:
-        - src: https://cdn.appscode.com/k8s/icons/menu/monitoring.svg
+        - src: https://cdn.appscode.com/k8s/icons/action-icons/monitor.svg
           type: image/svg+xml
         name: Monitoring
         operationId: edit-self-monitoring
@@ -43,11 +43,16 @@ spec:
         apiGroup: source.toolkit.fluxcd.io
         kind: HelmRepository
         name: bytebuilders-ui
-      version: v0.4.15
+      version: sha256:bebcc5c6677dad538f79758024e17d20608adca53249304a742ef142bb05a32c
     options:
       name: kubedbcom-kafka-editor-options
       sourceRef:
         apiGroup: source.toolkit.fluxcd.io
         kind: HelmRepository
         name: bytebuilders-ui
-      version: v0.4.15
+      version: sha256:7d2fcf7df64e62d38925bbac168c59649fdd55adda2429e38113943853eed841
+  variants:
+  - name: default
+    selector:
+      matchLabels:
+        charts.x-helm.dev/is-default-preset: "true"
