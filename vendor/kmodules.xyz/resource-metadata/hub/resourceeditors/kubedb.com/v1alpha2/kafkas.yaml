@@ -29,7 +29,7 @@ spec:
             apiGroup: source.toolkit.fluxcd.io
             kind: HelmRepository
             name: bytebuilders-ui
-          version: sha256:bebcc5c6677dad538f79758024e17d20608adca53249304a742ef142bb05a32c
+          version: v0.4.17
         flow: standalone-edit
         icons:
         - src: https://cdn.appscode.com/k8s/icons/action-icons/monitor.svg
@@ -43,14 +43,14 @@ spec:
         apiGroup: source.toolkit.fluxcd.io
         kind: HelmRepository
         name: bytebuilders-ui
-      version: sha256:bebcc5c6677dad538f79758024e17d20608adca53249304a742ef142bb05a32c
+      version: v0.4.17
     options:
       name: kubedbcom-kafka-editor-options
       sourceRef:
         apiGroup: source.toolkit.fluxcd.io
         kind: HelmRepository
         name: bytebuilders-ui
-      version: sha256:7d2fcf7df64e62d38925bbac168c59649fdd55adda2429e38113943853eed841
+      version: v0.4.17
   variants:
   - name: default
     selector:

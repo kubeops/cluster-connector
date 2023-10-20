@@ -43,7 +43,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
-	cu "kmodules.xyz/client-go/client"
+	clustermeta "kmodules.xyz/client-go/cluster"
 	"kmodules.xyz/client-go/meta"
 	_ "kmodules.xyz/client-go/meta"
 	"kmodules.xyz/client-go/tools/clusterid"
@@ -94,7 +94,7 @@ func NewCmdRun() *cobra.Command {
 				os.Exit(1)
 			}
 
-			cid, err := cu.ClusterUID(mgr.GetAPIReader())
+			cid, err := clustermeta.ClusterUID(mgr.GetAPIReader())
 			if err != nil {
 				setupLog.Error(err, "failed to detect cluster id")
 				os.Exit(1)

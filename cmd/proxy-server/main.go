@@ -40,7 +40,7 @@ import (
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/klog/v2/klogr"
-	cu "kmodules.xyz/client-go/client"
+	clustermeta "kmodules.xyz/client-go/cluster"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -153,7 +153,7 @@ func getNatsClient() (*nats.Conn, error) {
 		return nil, err
 	}
 
-	cid, err := cu.ClusterUID(c)
+	cid, err := clustermeta.ClusterUID(c)
 	if err != nil {
 		return nil, err
 	}

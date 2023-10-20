@@ -27,14 +27,14 @@ spec:
         apiGroup: source.toolkit.fluxcd.io
         kind: HelmRepository
         name: bytebuilders-ui
-      version: sha256:910c91af3ef01e63181534209e97be9de1cf4150a707c2587bc3483924323657
+      version: v0.4.17
     options:
       name: kubevaultcom-vaultserver-editor-options
       sourceRef:
         apiGroup: source.toolkit.fluxcd.io
         kind: HelmRepository
         name: bytebuilders-ui
-      version: sha256:6ee98c68d1340b815196889c5104f964ada8e6e70ba4369423c8bd747ff710d5
+      version: v0.4.17
   variants:
   - name: default
     selector:
