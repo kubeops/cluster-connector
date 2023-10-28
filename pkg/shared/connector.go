@@ -38,11 +38,7 @@ const (
 	ConnectorLinkLifetime = 10 * time.Minute
 )
 
-var (
-	ConnectorChartURL     = "https://charts.appscode.com/stable"
-	ConnectorChartName    = "cluster-connector"
-	ConnectorChartVersion = "" // "v0.1.0"
-)
+var ChartClusterConnector = "cluster-connector"
 
 const (
 	ConnectorLinkManifestBucket = "gs://connect.bytebuilders.link"

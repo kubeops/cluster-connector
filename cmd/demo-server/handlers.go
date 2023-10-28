@@ -38,7 +38,7 @@ var links = map[string]shared.LinkData{}
 func genLink(fs blobfs.Interface, bs *lib.BlobStore, reg repo.IRegistry, u shared.User, req shared.LinkRequest) (*shared.Link, error) {
 	now := time.Now()
 
-	l, err := link.Generate(bs, reg, kubeops.ClusterConnectorSpec{
+	l, err := link.Generate(nil, bs, reg, kubeops.ClusterConnectorSpec{
 		LinkID: "",
 		Nats:   kubeops.ClusterConnectorNats{},
 	})

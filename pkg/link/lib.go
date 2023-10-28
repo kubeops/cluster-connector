@@ -29,14 +29,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	kmapi "kmodules.xyz/client-go/api/v1"
+	"kmodules.xyz/resource-metadata/hub"
 	"kubepack.dev/kubepack/pkg/lib"
 	"kubepack.dev/lib-helm/pkg/repo"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	releasesapi "x-helm.dev/apimachinery/apis/releases/v1alpha1"
 )
 
-func Generate(bs *lib.BlobStore, reg repo.IRegistry, cv kubeops.ClusterConnectorSpec) (*shared.Link, error) {
-	order, err := NewOrder(shared.ConnectorChartURL, shared.ConnectorChartName, shared.ConnectorChartVersion, cv)
+func Generate(kc client.Client, bs *lib.BlobStore, reg repo.IRegistry, cv kubeops.ClusterConnectorSpec) (*shared.Link, error) {
+	order, err := NewOrder(kc, cv)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +60,7 @@ func NewBlobStore() (*lib.BlobStore, error) {
 	}, nil
 }
 
-func NewOrder(url, name, version string, cc kubeops.ClusterConnectorSpec) (*releasesapi.Order, error) {
+func NewOrder(kc client.Client, cc kubeops.ClusterConnectorSpec) (*releasesapi.Order, error) {
 	if len(cc.LinkID) == 0 {
 		cc.LinkID = xid.New().String()
 	}
@@ -74,7 +75,7 @@ func NewOrder(url, name, version string, cc kubeops.ClusterConnectorSpec) (*rele
 			APIVersion: releasesapi.GroupVersion.String(),
 			Kind:       releasesapi.ResourceKindOrder,
 		}, ObjectMeta: metav1.ObjectMeta{
-			Name:              name,
+			Name:              shared.ChartClusterConnector,
 			UID:               types.UID(cc.LinkID), // using ulids instead of UUID
 			CreationTimestamp: metav1.NewTime(time.Now()),
 		},
@@ -83,17 +84,12 @@ func NewOrder(url, name, version string, cc kubeops.ClusterConnectorSpec) (*rele
 				{
 					Chart: &releasesapi.ChartSelection{
 						ChartRef: releasesapi.ChartRef{
-							Name: name,
-							SourceRef: kmapi.TypedObjectReference{
-								APIGroup:  releasesapi.SourceGroupLegacy,
-								Kind:      releasesapi.SourceKindLegacy,
-								Namespace: "",
-								Name:      url,
-							},
+							Name:      shared.ChartClusterConnector,
+							SourceRef: hub.BootstrapHelmRepository(kc),
 						},
-						Version:     version,
-						ReleaseName: name,
-						Namespace:   "kubeops", // change to kubeops or bytebuilders?
+						Version:     hub.FeatureVersion(kc, shared.ChartClusterConnector),
+						ReleaseName: shared.ChartClusterConnector,
+						Namespace:   hub.BootstrapHelmRepositoryNamespace(),
 						Bundle:      nil,
 						// ValuesFile:  "values.yaml",
 						ValuesPatch: &runtime.RawExtension{Raw: patch},
