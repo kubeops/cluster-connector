@@ -110,7 +110,7 @@ func tlsConfigKey(c *transport.Config, names shared.SubjectNames) (tlsCacheKey, 
 		return tlsCacheKey{}, false, err
 	}
 
-	if c.TLS.GetCert != nil || c.Dial != nil || c.Proxy != nil {
+	if c.Proxy != nil {
 		// cannot determine equality for functions
 		return tlsCacheKey{}, false, nil
 	}

@@ -41,9 +41,6 @@ func New(config *transport.Config, nc *nats.Conn, names shared.SubjectNames, tim
 	if config.Transport != nil {
 		return nil, fmt.Errorf("using a custom transport is not allowed")
 	}
-	if config.Dial != nil {
-		return nil, fmt.Errorf("using a custom dialer")
-	}
 	if config.Proxy != nil {
 		return nil, fmt.Errorf("using a custom proxy")
 	}

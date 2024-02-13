@@ -22,14 +22,16 @@ import (
 )
 
 type BootstrapPresets struct {
-	Image    ImageRegistrySpec `json:"image"`
-	Registry RegistryInfo      `json:"registry"`
-	Helm     HelmInfo          `json:"helm"`
+	// +optional
+	OfflineInstaller bool              `json:"offlineInstaller"`
+	Image            ImageRegistrySpec `json:"image"`
+	Registry         RegistryInfo      `json:"registry"`
+	Helm             HelmInfo          `json:"helm"`
 }
 
 type ImageRegistrySpec struct {
-	RegistryFQDN string          `json:"registryFQDN"`
-	Proxies      RegistryProxies `json:"proxies"`
+	//+optional
+	Proxies RegistryProxies `json:"proxies"`
 }
 
 type RegistryProxies struct {
@@ -53,10 +55,9 @@ type RegistryProxies struct {
 	AppsCode string `json:"appscode"`
 }
 
-type RepositoryCredential map[string]string
-
 type RegistryInfo struct {
-	Credentials RepositoryCredential `json:"credentials"`
+	//+optional
+	Credentials map[string]string `json:"credentials"`
 }
 
 type HelmInfo struct {

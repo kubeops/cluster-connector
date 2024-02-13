@@ -28,6 +28,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2/klogr"
 	clustermeta "kmodules.xyz/client-go/cluster"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -52,7 +53,11 @@ func main() {
 	// 		panic(err)
 	// 	}
 
-	mapper, err := apiutil.NewDynamicRESTMapper(config)
+	hc, err := rest.HTTPClientFor(config)
+	if err != nil {
+		panic(err)
+	}
+	mapper, err := apiutil.NewDynamicRESTMapper(config, hc)
 	if err != nil {
 		panic(err)
 	}
@@ -60,7 +65,7 @@ func main() {
 	c, err := client.New(config, client.Options{
 		Scheme: clientgoscheme.Scheme,
 		Mapper: mapper,
-		Opts: client.WarningHandlerOptions{
+		WarningHandler: client.WarningHandlerOptions{
 			SuppressWarnings:   false,
 			AllowDuplicateLogs: false,
 		},

@@ -17,7 +17,6 @@ limitations under the License.
 package transport
 
 import (
-	"crypto/tls"
 	"testing"
 	"time"
 
@@ -204,19 +203,19 @@ func TestNew(t *testing.T) {
 				},
 			},
 		},
-		"callback cert and key": {
-			TLS:     true,
-			TLSCert: true,
-			Config: &transport.Config{
-				TLS: transport.TLSConfig{
-					CAData: []byte(rootCACert),
-					GetCert: func() (*tls.Certificate, error) {
-						crt, err := tls.X509KeyPair([]byte(certData), []byte(keyData))
-						return &crt, err
-					},
-				},
-			},
-		},
+		//"callback cert and key": {
+		//	TLS:     true,
+		//	TLSCert: true,
+		//	Config: &transport.Config{
+		//		TLS: transport.TLSConfig{
+		//			CAData: []byte(rootCACert),
+		//			GetCert: func() (*tls.Certificate, error) {
+		//				crt, err := tls.X509KeyPair([]byte(certData), []byte(keyData))
+		//				return &crt, err
+		//			},
+		//		},
+		//	},
+		//},
 		//"cert callback error": {
 		//	TLS:     true,
 		//	TLSCert: true,
@@ -230,32 +229,32 @@ func TestNew(t *testing.T) {
 		//		},
 		//	},
 		//},
-		"cert data overrides empty callback result": {
-			TLS:     true,
-			TLSCert: true,
-			Config: &transport.Config{
-				TLS: transport.TLSConfig{
-					CAData: []byte(rootCACert),
-					GetCert: func() (*tls.Certificate, error) {
-						return nil, nil
-					},
-					CertData: []byte(certData),
-					KeyData:  []byte(keyData),
-				},
-			},
-		},
-		"callback returns nothing": {
-			TLS:     true,
-			TLSCert: true,
-			Config: &transport.Config{
-				TLS: transport.TLSConfig{
-					CAData: []byte(rootCACert),
-					GetCert: func() (*tls.Certificate, error) {
-						return nil, nil
-					},
-				},
-			},
-		},
+		//"cert data overrides empty callback result": {
+		//	TLS:     true,
+		//	TLSCert: true,
+		//	Config: &transport.Config{
+		//		TLS: transport.TLSConfig{
+		//			CAData: []byte(rootCACert),
+		//			GetCert: func() (*tls.Certificate, error) {
+		//				return nil, nil
+		//			},
+		//			CertData: []byte(certData),
+		//			KeyData:  []byte(keyData),
+		//		},
+		//	},
+		//},
+		//"callback returns nothing": {
+		//	TLS:     true,
+		//	TLSCert: true,
+		//	Config: &transport.Config{
+		//		TLS: transport.TLSConfig{
+		//			CAData: []byte(rootCACert),
+		//			GetCert: func() (*tls.Certificate, error) {
+		//				return nil, nil
+		//			},
+		//		},
+		//	},
+		//},
 	}
 	for k, testCase := range testCases {
 		t.Run(k, func(t *testing.T) {

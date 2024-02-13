@@ -32,6 +32,7 @@ import (
 	"go.wandrs.dev/inject"
 	"gomodules.xyz/blobfs"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2/klogr"
 	clustermeta "kmodules.xyz/client-go/cluster"
 	"kubepack.dev/lib-helm/pkg/repo"
@@ -105,7 +106,11 @@ func getNatsClient() (*nats.Conn, error) {
 	// 		panic(err)
 	// 	}
 
-	mapper, err := apiutil.NewDynamicRESTMapper(config)
+	hc, err := rest.HTTPClientFor(config)
+	if err != nil {
+		return nil, err
+	}
+	mapper, err := apiutil.NewDynamicRESTMapper(config, hc)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +118,7 @@ func getNatsClient() (*nats.Conn, error) {
 	c, err := client.New(config, client.Options{
 		Scheme: clientgoscheme.Scheme,
 		Mapper: mapper,
-		Opts: client.WarningHandlerOptions{
+		WarningHandler: client.WarningHandlerOptions{
 			SuppressWarnings:   false,
 			AllowDuplicateLogs: false,
 		},

@@ -32,8 +32,9 @@ import (
 
 const (
 	AppsCodeChartsLegacyURL = "https://charts.appscode.com/stable"
-	AppsCodeChartsOCIURL    = "oci://r.appscode.com/charts"
-	FluxCDChartsURL         = "https://fluxcd-community.github.io/helm-charts"
+	// AppsCodeChartsOCIURL    = "oci://r.appscode.com/charts"
+	AppsCodeChartsOCIURL = "oci://ghcr.io/appscode-charts"
+	FluxCDChartsURL      = "https://fluxcd-community.github.io/helm-charts"
 )
 
 const (
@@ -42,9 +43,6 @@ const (
 
 	bootstrapHelmRepositoryNamespace       = "kubeops"
 	EnvVarBootstrapHelmRepositoryNamespace = "BOOTSTRAP_HELM_REPOSITORY_NAMESPACE"
-
-	fluxcdHelmRepositoryName       = "fluxcd-community"
-	EnvVarFluxcdHelmRepositoryName = "FLUXCD_HELM_REPOSITORY_NAME"
 
 	BootstrapPresetsName = "bootstrap-presets"
 
@@ -73,14 +71,6 @@ func BootstrapHelmRepositoryName() string {
 	return bootstrapHelmRepositoryName
 }
 
-func FluxCDHelmRepositoryName() string {
-	ns := os.Getenv(EnvVarFluxcdHelmRepositoryName)
-	if ns != "" {
-		return ns
-	}
-	return fluxcdHelmRepositoryName
-}
-
 func BootstrapHelmRepository(kc client.Client) kmapi.TypedObjectReference {
 	if kc != nil {
 		var repo fluxsrc.HelmRepository
@@ -105,12 +95,12 @@ func BootstrapHelmRepository(kc client.Client) kmapi.TypedObjectReference {
 func FluxCDHelmRepository(kc client.Client) kmapi.TypedObjectReference {
 	if kc != nil {
 		var repo fluxsrc.HelmRepository
-		err := kc.Get(context.TODO(), client.ObjectKey{Name: FluxCDHelmRepositoryName(), Namespace: BootstrapHelmRepositoryNamespace()}, &repo)
+		err := kc.Get(context.TODO(), client.ObjectKey{Name: BootstrapHelmRepositoryName(), Namespace: BootstrapHelmRepositoryNamespace()}, &repo)
 		if err == nil {
 			return kmapi.TypedObjectReference{
 				APIGroup:  releasesapi.SourceGroupHelmRepository,
 				Kind:      releasesapi.SourceKindHelmRepository,
-				Namespace: FluxCDHelmRepositoryName(),
+				Namespace: BootstrapHelmRepositoryNamespace(),
 				Name:      BootstrapHelmRepositoryName(),
 			}
 		}
@@ -123,7 +113,7 @@ func FluxCDHelmRepository(kc client.Client) kmapi.TypedObjectReference {
 	}
 }
 
-func FeatureVersion(kc client.Client, featureName string) string {
+func GetBootstrapPresets(kc client.Client) (*shared.BootstrapPresets, bool) {
 	if kc != nil {
 		var ccp chartsapi.ClusterChartPreset
 		err := kc.Get(context.TODO(), client.ObjectKey{Name: BootstrapPresetsName}, &ccp)
@@ -131,11 +121,19 @@ func FeatureVersion(kc client.Client, featureName string) string {
 			var preset shared.BootstrapPresets
 			err := json.Unmarshal(ccp.Spec.Values.Raw, &preset)
 			if err == nil {
-				hr := preset.Helm.Releases[featureName]
-				if hr != nil {
-					return hr.Version
-				}
+				return &preset, true
 			}
+		}
+	}
+	return nil, false
+}
+
+func FeatureVersion(kc client.Client, featureName string) string {
+	preset, found := GetBootstrapPresets(kc)
+	if found {
+		hr := preset.Helm.Releases[featureName]
+		if hr != nil {
+			return hr.Version
 		}
 	}
 	return ""

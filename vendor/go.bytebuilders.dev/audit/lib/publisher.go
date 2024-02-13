@@ -31,10 +31,8 @@ import (
 	"go.bytebuilders.dev/license-verifier/info"
 	"gomodules.xyz/sync"
 	core "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -50,6 +48,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
+
+const eventInterval = 1 * time.Hour
+
+// Informer - informer allows you interact with the underlying informer.
+type Informer interface {
+	// AddEventHandlerWithResyncPeriod adds an event handler to the shared informer using the
+	// specified resync period.  Events to a single handler are delivered sequentially, but there is
+	// no coordination between different handlers.
+	AddEventHandlerWithResyncPeriod(handler cache.ResourceEventHandler, resyncPeriod time.Duration) (cache.ResourceEventHandlerRegistration, error)
+}
 
 type EventCreator func(obj client.Object) (*api.Event, error)
 
@@ -157,13 +165,14 @@ func (p *EventPublisher) Publish(ev *api.Event, et api.EventType) error {
 	}
 }
 
-func (p *EventPublisher) ForGVK(gvk schema.GroupVersionKind) cache.ResourceEventHandler {
+func (p *EventPublisher) ForGVK(informer Informer, gvk schema.GroupVersionKind) {
 	if gvk.Version == "" || gvk.Kind == "" {
 		panic(fmt.Sprintf("incomplete GVK; %+v", gvk))
 	}
 
-	return &ResourceEventPublisher{
-		p: p,
+	h := &ResourceEventPublisher{
+		p:        p,
+		counters: map[kmapi.OID]int32{},
 		createEvent: func(obj client.Object) (*api.Event, error) {
 			r := obj.DeepCopyObject().(client.Object)
 			r.GetObjectKind().SetGroupVersionKind(gvk)
@@ -183,6 +192,7 @@ func (p *EventPublisher) ForGVK(gvk schema.GroupVersionKind) cache.ResourceEvent
 			return ev, nil
 		},
 	}
+	_, _ = informer.AddEventHandlerWithResyncPeriod(h, eventInterval)
 }
 
 type funcNodeLister func() ([]*core.Node, error)
@@ -229,7 +239,7 @@ func (p *EventPublisher) setupSiteInfoPublisher(cfg *rest.Config, kc kubernetes.
 		p.si.Product = new(auditorapi.ProductInfo)
 	}
 
-	nodeInformer.AddEventHandler(&ResourceEventPublisher{
+	_, err = nodeInformer.AddEventHandlerWithResyncPeriod(&SiteInfoPublisher{
 		p: p,
 		createEvent: func(_ client.Object) (*api.Event, error) {
 			cmeta, err := clusterid.ClusterMetadata(kc.CoreV1().Namespaces())
@@ -266,8 +276,8 @@ func (p *EventPublisher) setupSiteInfoPublisher(cfg *rest.Config, kc kubernetes.
 			}
 			return ev, nil
 		},
-	})
-	return nil
+	}, eventInterval)
+	return err
 }
 
 func (p *EventPublisher) SetupWithManagerForKind(ctx context.Context, mgr manager.Manager, gvk schema.GroupVersionKind) error {
@@ -278,7 +288,7 @@ func (p *EventPublisher) SetupWithManagerForKind(ctx context.Context, mgr manage
 	if err != nil {
 		return err
 	}
-	i.AddEventHandler(p.ForGVK(gvk))
+	p.ForGVK(i, gvk)
 	return nil
 }
 
@@ -288,88 +298,4 @@ func (p *EventPublisher) SetupWithManager(ctx context.Context, mgr manager.Manag
 		return err
 	}
 	return p.SetupWithManagerForKind(ctx, mgr, gvk)
-}
-
-type ResourceEventPublisher struct {
-	p           *EventPublisher
-	createEvent EventCreator
-}
-
-var _ cache.ResourceEventHandler = &ResourceEventPublisher{}
-
-func (p *ResourceEventPublisher) OnAdd(o interface{}) {
-	obj, ok := o.(client.Object)
-	if !ok {
-		return
-	}
-
-	ev, err := p.createEvent(obj)
-	if err != nil {
-		klog.V(5).InfoS("failed to create event data", "error", err)
-		return
-	}
-
-	if err = p.p.Publish(ev, api.EventCreated); err != nil {
-		klog.V(5).InfoS("error while publishing event", "error", err)
-	}
-}
-
-func (p *ResourceEventPublisher) OnUpdate(oldObj, newObj interface{}) {
-	uOld, ok := oldObj.(client.Object)
-	if !ok {
-		return
-	}
-	uNew, ok := newObj.(client.Object)
-	if !ok {
-		return
-	}
-
-	if uOld.GetUID() == uNew.GetUID() && uOld.GetGeneration() == uNew.GetGeneration() {
-		if klog.V(8).Enabled() {
-			klog.V(8).InfoS("skipping update event",
-				"gvk", uNew.GetObjectKind().GroupVersionKind(),
-				"namespace", uNew.GetNamespace(),
-				"name", uNew.GetName(),
-			)
-		}
-		return
-	}
-
-	ev, err := p.createEvent(uNew)
-	if err != nil {
-		klog.V(5).InfoS("failed to create event data", "error", err)
-		return
-	}
-
-	if err = p.p.Publish(ev, api.EventUpdated); err != nil {
-		klog.V(5).InfoS("failed to publish event", "error", err)
-	}
-}
-
-func (p *ResourceEventPublisher) OnDelete(obj interface{}) {
-	var object client.Object
-	var ok bool
-	if object, ok = obj.(client.Object); !ok {
-		tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
-		if !ok {
-			klog.V(5).Info("error decoding object, invalid type")
-			return
-		}
-		object, ok = tombstone.Obj.(client.Object)
-		if !ok {
-			utilruntime.HandleError(fmt.Errorf("error decoding object tombstone, invalid type"))
-			return
-		}
-		klog.V(5).Infof("Recovered deleted object '%v' from tombstone", tombstone.Obj.(metav1.Object).GetName())
-	}
-
-	ev, err := p.createEvent(object)
-	if err != nil {
-		klog.V(5).InfoS("failed to create event data", "error", err)
-		return
-	}
-
-	if err := p.p.Publish(ev, api.EventDeleted); err != nil {
-		klog.V(5).InfoS("failed to publish event", "error", err)
-	}
 }

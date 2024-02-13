@@ -54,8 +54,6 @@ func Resource(resource string) schema.GroupResource {
 // Adds the list of known types to api.Scheme.
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
-		&Auditor{},
-		&AuditorList{},
 		&ClusterConnector{},
 		&ClusterConnectorList{},
 		&ConfigSyncer{},
@@ -68,10 +66,10 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&KubeUiServerList{},
 		&Panopticon{},
 		&PanopticonList{},
-		&PrepareKubernetesClusterList{},
-		&PrepareKubernetesCluster{},
 		&GatekeeperGrafanaDashboards{},
 		&GatekeeperGrafanaDashboardsList{},
+		&Petset{},
+		&PetsetList{},
 		&Scanner{},
 		&ScannerList{},
 		&Sidekick{},

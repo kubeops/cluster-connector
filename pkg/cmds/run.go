@@ -49,6 +49,7 @@ import (
 	"kmodules.xyz/client-go/tools/clusterid"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 )
 
 var (
@@ -84,7 +85,7 @@ func NewCmdRun() *cobra.Command {
 
 			mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 				Scheme:                 scheme,
-				MetricsBindAddress:     metricsAddr,
+				Metrics:                metricsserver.Options{BindAddress: metricsAddr},
 				HealthProbeBindAddress: probeAddr,
 				LeaderElection:         false,
 				LeaderElectionID:       "5b87adeb.cluster-connector.appscode.com",
