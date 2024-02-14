@@ -94,7 +94,7 @@ func getNatsClient() (*nats.Conn, error) {
 	flag.StringVar(&licenseFile, "license-file", licenseFile, "Path to license file")
 	flag.Parse()
 
-	ctrl.SetLogger(klogr.New())
+	ctrl.SetLogger(klogr.New()) // nolint:staticcheck
 	config := ctrl.GetConfigOrDie()
 
 	// 	tr, err := cfg.TransportConfig()

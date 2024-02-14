@@ -41,7 +41,7 @@ func main() {
 	flag.StringVar(&licenseFile, "license-file", licenseFile, "Path to license file")
 	flag.Parse()
 
-	ctrl.SetLogger(klogr.New())
+	ctrl.SetLogger(klogr.New()) // nolint:staticcheck
 	config := ctrl.GetConfigOrDie()
 
 	// 	tr, err := cfg.TransportConfig()
@@ -89,6 +89,9 @@ func main() {
 	// k8s.io/client-go/transport/transport.go # TLSConfigFor
 
 	c2, err := rest2.GetForRestConfig(config, ncfg.Client, shared.CrossAccountNames{LinkID: cid})
+	if err != nil {
+		panic(err)
+	}
 
 	kc := kubernetes.NewForConfigOrDie(c2)
 	nodes, err := kc.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})

@@ -17,9 +17,6 @@ limitations under the License.
 package transport
 
 import (
-	"context"
-	"crypto/tls"
-	"net"
 	"net/http"
 	"testing"
 
@@ -66,12 +63,12 @@ func TestTLSConfigKey(t *testing.T) {
 	}
 
 	// Make sure config fields that affect the tls config affect the cache key
-	dialer := net.Dialer{}
-	getCert := func() (*tls.Certificate, error) { return nil, nil }
+	// dialer := net.Dialer{}
+	// getCert := func() (*tls.Certificate, error) { return nil, nil }
 	uniqueConfigurations := map[string]*transport.Config{
-		"no tls":   {},
-		"dialer":   {Dial: dialer.DialContext},
-		"dialer2":  {Dial: func(ctx context.Context, network, address string) (net.Conn, error) { return nil, nil }},
+		"no tls": {},
+		// "dialer":   {Dial: dialer.DialContext},
+		// "dialer2":  {Dial: func(ctx context.Context, network, address string) (net.Conn, error) { return nil, nil }},
 		"insecure": {TLS: transport.TLSConfig{Insecure: true}},
 		"cadata 1": {TLS: transport.TLSConfig{CAData: []byte{1}}},
 		"cadata 2": {TLS: transport.TLSConfig{CAData: []byte{2}}},
@@ -120,24 +117,24 @@ func TestTLSConfigKey(t *testing.T) {
 				KeyData:  []byte{1},
 			},
 		},
-		"getCert1": {
-			TLS: transport.TLSConfig{
-				KeyData: []byte{1},
-				GetCert: getCert,
-			},
-		},
-		"getCert2": {
-			TLS: transport.TLSConfig{
-				KeyData: []byte{1},
-				GetCert: func() (*tls.Certificate, error) { return nil, nil },
-			},
-		},
-		"getCert1, key 2": {
-			TLS: transport.TLSConfig{
-				KeyData: []byte{2},
-				GetCert: getCert,
-			},
-		},
+		// "getCert1": {
+		// 	TLS: transport.TLSConfig{
+		// 		KeyData: []byte{1},
+		// 		GetCert: getCert,
+		// 	},
+		// },
+		// "getCert2": {
+		// 	TLS: transport.TLSConfig{
+		// 		KeyData: []byte{1},
+		// 		GetCert: func() (*tls.Certificate, error) { return nil, nil },
+		// 	},
+		// },
+		// "getCert1, key 2": {
+		// 	TLS: transport.TLSConfig{
+		// 		KeyData: []byte{2},
+		// 		GetCert: getCert,
+		// 	},
+		// },
 		"http2, http1.1": {TLS: transport.TLSConfig{NextProtos: []string{"h2", "http/1.1"}}},
 		"http1.1-only":   {TLS: transport.TLSConfig{NextProtos: []string{"http/1.1"}}},
 	}

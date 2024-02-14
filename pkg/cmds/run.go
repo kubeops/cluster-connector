@@ -79,7 +79,7 @@ func NewCmdRun() *cobra.Command {
 				os.Exit(1)
 			}
 
-			ctrl.SetLogger(klogr.New())
+			ctrl.SetLogger(klogr.New()) // nolint:staticcheck
 
 			ctx := ctrl.SetupSignalHandler()
 
