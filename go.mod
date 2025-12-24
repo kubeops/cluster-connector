@@ -1,8 +1,6 @@
 module kubeops.dev/cluster-connector
 
-go 1.22.0
-
-toolchain go1.22.2
+go 1.24.0
 
 require (
 	github.com/go-chi/chi/v5 v5.0.11
@@ -18,7 +16,7 @@ require (
 	go.bytebuilders.dev/license-verifier v0.14.0
 	go.wandrs.dev/binding v0.0.2
 	go.wandrs.dev/inject v0.0.1
-	golang.org/x/text v0.14.0
+	golang.org/x/text v0.31.0
 	gomodules.xyz/blobfs v0.1.14
 	gomodules.xyz/jsonpatch/v2 v2.4.0
 	gomodules.xyz/logs v0.0.7
@@ -243,13 +241,13 @@ require (
 	go.uber.org/zap v1.26.0 // indirect
 	go.wandrs.dev/http v0.0.1 // indirect
 	gocloud.dev v0.26.0 // indirect
-	golang.org/x/crypto v0.21.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
-	golang.org/x/net v0.23.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/oauth2 v0.15.0 // indirect
-	golang.org/x/sync v0.5.0 // indirect
-	golang.org/x/sys v0.18.0 // indirect
-	golang.org/x/term v0.18.0 // indirect
+	golang.org/x/sync v0.18.0 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/term v0.37.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	gomodules.xyz/clock v0.0.0-20200817085942-06523dba733f // indirect
