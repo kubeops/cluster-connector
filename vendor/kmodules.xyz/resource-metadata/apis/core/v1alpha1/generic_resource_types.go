@@ -68,7 +68,50 @@ type GenericResourceSpec struct {
 	RoleResourceLimits map[api.PodRole]core.ResourceList `json:"roleResourceLimits,omitempty"`
 	// +optional
 	RoleResourceRequests map[api.PodRole]core.ResourceList `json:"roleResourceRequests,omitempty"`
-	Status               GenericResourceStatus             `json:"status"`
+
+	Namespace *NamespaceInfo    `json:"namespace,omitempty"`
+	Pods      []ComputeResource `json:"pods,omitempty"`
+	Storage   []StorageResource `json:"storage,omitempty"`
+
+	Status GenericResourceStatus `json:"status"`
+}
+
+type NamespaceInfo struct {
+	// +optional
+	UID  types.UID `json:"uid,omitempty"`
+	Name string    `json:"name"`
+	// +optional
+	CreationTimestamp   metav1.Time       `json:"creationTimestamp,omitempty"`
+	AceOrgID            string            `json:"aceOrgID,omitempty"`
+	AceOrgMetadata      map[string]string `json:"aceOrgMetadata,omitempty"`
+	EnableResourceTrial bool              `json:"enableResourceTrial,omitempty"`
+}
+
+type ComputeResource struct {
+	// +optional
+	UID  types.UID `json:"uid,omitempty"`
+	Name string    `json:"name"`
+	// +optional
+	CreationTimestamp metav1.Time         `json:"creationTimestamp,omitempty"`
+	Containers        []ContainerResource `json:"containers,omitempty"`
+	InitContainers    []ContainerResource `json:"initContainers,omitempty"`
+}
+
+type ContainerResource struct {
+	Name string `json:"name"`
+	// +optional
+	Resource      core.ResourceRequirements    `json:"resource"`
+	RestartPolicy *core.ContainerRestartPolicy `json:"restartPolicy,omitempty"`
+}
+
+type StorageResource struct {
+	// +optional
+	UID  types.UID `json:"uid,omitempty"`
+	Name string    `json:"name"`
+	// +optional
+	CreationTimestamp metav1.Time `json:"creationTimestamp,omitempty"`
+	// +optional
+	Resources core.VolumeResourceRequirements `json:"resources,omitempty"`
 }
 
 type GenericResourceStatus struct {

@@ -1,7 +1,6 @@
 apiVersion: meta.k8s.appscode.com/v1alpha1
 kind: ResourceDescriptor
 metadata:
-  creationTimestamp: null
   labels:
     k8s.io/group: catalog.kubedb.com
     k8s.io/kind: RedisVersion
@@ -64,6 +63,13 @@ spec:
               - image
               type: object
             deprecated:
+              type: boolean
+            distribution:
+              enum:
+              - Official
+              - Valkey
+              type: string
+            endOfLife:
               type: boolean
             exporter:
               properties:
@@ -146,6 +152,21 @@ spec:
                   - restoreTask
                   type: object
               type: object
+            ui:
+              items:
+                properties:
+                  disable:
+                    type: boolean
+                  name:
+                    type: string
+                  values:
+                    x-kubernetes-preserve-unknown-fields: true
+                  version:
+                    type: string
+                required:
+                - name
+                type: object
+              type: array
             updateConstraints:
               properties:
                 allowlist:

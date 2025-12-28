@@ -53,7 +53,6 @@ import (
 	crdv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	crd_cs "k8s.io/apiextensions-apiserver/pkg/client/clientset/clientset"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -67,6 +66,7 @@ import (
 	disco_util "kmodules.xyz/client-go/discovery"
 	"kmodules.xyz/client-go/tools/parser"
 	wait2 "kmodules.xyz/client-go/tools/wait"
+	"kmodules.xyz/resource-metadata/hub"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	yamllib "sigs.k8s.io/yaml"
 	"x-helm.dev/apimachinery/apis"
@@ -110,7 +110,7 @@ func (x *WaitForPrinter) Do() error {
 		if w.Labels != nil {
 			parts = append(parts, "-l")
 
-			selector, err := v1.LabelSelectorAsSelector(w.Labels)
+			selector, err := metav1.LabelSelectorAsSelector(w.Labels)
 			if err != nil {
 				return err
 			}
@@ -172,7 +172,7 @@ func (x *WaitForChecker) Do() error {
 			builder.ResourceTypeOrNameArgs(false, flags.Resource.Group+"/"+flags.Resource.Resource)
 		}
 		if flags.Labels != nil {
-			selector, err := v1.LabelSelectorAsSelector(flags.Labels)
+			selector, err := metav1.LabelSelectorAsSelector(flags.Labels)
 			if err != nil {
 				return err
 			}
@@ -264,7 +264,7 @@ func (x *CRDReadinessChecker) Do() error {
 	for _, crd := range x.CRDs {
 		crds = append(crds, &apiextensions.CustomResourceDefinition{
 			V1: &crdv1.CustomResourceDefinition{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name: fmt.Sprintf("%s.%s", crd.Resource, crd.Group),
 				},
 				Spec: crdv1.CustomResourceDefinitionSpec{
@@ -461,9 +461,9 @@ func (x *YAMLPrinter) Do() error {
 		bucket = blob.PrefixedBucket(bucket, strings.TrimSuffix(x.Prefix, "/")+"/")
 	}
 	dirManifest := blob.PrefixedBucket(bucket, x.UID+"/manifests/")
-	defer dirManifest.Close()
+	defer dirManifest.Close() // nolint:errcheck
 	dirCRD := blob.PrefixedBucket(bucket, x.UID+"/crds/")
-	defer dirCRD.Close()
+	defer dirCRD.Close() // nolint:errcheck
 
 	var buf bytes.Buffer
 
@@ -555,13 +555,13 @@ func (x *YAMLPrinter) Do() error {
 
 		for _, crd := range crds {
 			// Open the key "${releaseName}.yaml" for writing with the default options.
-			w, err := dirCRD.NewWriter(ctx, crd.Name+".yaml", nil)
+			w, err := dirCRD.NewWriter(ctx, crd.Name, nil)
 			if err != nil {
 				return err
 			}
 			_, writeErr := w.Write(crd.File.Data)
 			// Always check the return value of Close when writing.
-			closeErr := w.Close()
+			closeErr := w.Close() // nolint:errcheck
 			if writeErr != nil {
 				return writeErr
 			}
@@ -569,7 +569,7 @@ func (x *YAMLPrinter) Do() error {
 				return closeErr
 			}
 
-			_, err = fmt.Fprintf(&buf, "kubectl apply -f %s\n", x.PublicURL+"/"+path.Join(x.UID, "crds", crd.Name+".yaml"))
+			_, err = fmt.Fprintf(&buf, "kubectl apply -f %s\n", x.PublicURL+"/"+path.Join(x.UID, "crds", crd.Name))
 			if err != nil {
 				return err
 			}
@@ -614,7 +614,7 @@ func (x *YAMLPrinter) Do() error {
 	var manifestDoc bytes.Buffer
 
 	if !apis.BuiltinNamespaces.Has(x.Namespace) {
-		manifestDoc.WriteString(fmt.Sprintf(`apiVersion: v1
+		manifestDoc.WriteString(fmt.Sprintf(`apiVersion: metav1
 kind: Namespace
 metadata:
   name: %s
@@ -657,7 +657,7 @@ metadata:
 		}
 		_, writeErr := manifestDoc.WriteTo(w)
 		// Always check the return value of Close when writing.
-		closeErr := w.Close()
+		closeErr := w.Close() // nolint:errcheck
 		if writeErr != nil {
 			return writeErr
 		}
@@ -675,7 +675,7 @@ metadata:
 	return err
 }
 
-func debug(format string, v ...interface{}) {
+func debug(format string, v ...any) {
 	format = fmt.Sprintf("[debug] %s\n", format)
 	_ = log.Output(2, fmt.Sprintf(format, v...))
 }
@@ -943,7 +943,7 @@ func (x *ApplicationUploader) Do() error {
 		bucket = blob.PrefixedBucket(bucket, strings.TrimSuffix(x.Prefix, "/")+"/")
 	}
 	bucket = blob.PrefixedBucket(bucket, x.UID+"/apps/"+x.App.Namespace+"/")
-	defer bucket.Close()
+	defer bucket.Close() // nolint:errcheck
 
 	data, err := yamllib.Marshal(x.App)
 	if err != nil {
@@ -956,7 +956,7 @@ func (x *ApplicationUploader) Do() error {
 	}
 	_, writeErr := fmt.Fprintln(w, string(data))
 	// Always check the return value of Close when writing.
-	closeErr := w.Close()
+	closeErr := w.Close() // nolint:errcheck
 	if writeErr != nil {
 		return writeErr
 	}
@@ -1228,4 +1228,194 @@ func ExtractResourceAttributes(data []byte, verb string, mapper disco_util.Resou
 
 		return nil
 	})
+}
+
+type ChartRenderer struct {
+	Registry repo.IRegistry
+	releasesapi.ChartSourceRef
+	ReleaseName string
+	Namespace   string
+	KubeVersion string
+	ValuesFile  string
+	ValuesPatch *runtime.RawExtension
+	Values      map[string]any
+
+	CRDs               []chart.File
+	Manifest           *chart.File
+	IsFeaturesetEditor bool
+}
+
+func (x *ChartRenderer) Do() error {
+	chrt, err := x.Registry.GetChart(x.ChartSourceRef)
+	if err != nil {
+		return err
+	}
+
+	if data, ok := chrt.Metadata.Annotations["meta.x-helm.dev/editor"]; ok && data != "" {
+		var gvr metav1.GroupVersionResource
+		if err := json.Unmarshal([]byte(data), &gvr); err != nil {
+			return fmt.Errorf("failed to parse %s annotation %s", "meta.x-helm.dev/editor", data)
+		}
+		x.IsFeaturesetEditor = hub.IsFeaturesetGR(schema.GroupResource{Group: gvr.Group, Resource: gvr.Resource})
+	}
+
+	cfg := new(action.Configuration)
+	client := action.NewInstall(cfg)
+	var extraAPIs []string
+
+	client.DryRun = true
+	client.ReleaseName = x.ReleaseName
+	client.Namespace = x.Namespace
+	client.Replace = true // Skip the name check
+	client.ClientOnly = true
+	client.APIVersions = extraAPIs
+	client.Version = x.Version
+
+	validInstallableChart, err := libchart.IsChartInstallable(chrt.Chart)
+	if !validInstallableChart {
+		return err
+	}
+
+	//if chrt.Metadata.Deprecated {
+	//}
+
+	if req := chrt.Metadata.Dependencies; req != nil {
+		// If CheckDependencies returns an error, we have unfulfilled dependencies.
+		// As of Helm 2.4.0, this is treated as a stopping condition:
+		// https://github.com/helm/helm/issues/2209
+		if err := action.CheckDependencies(chrt.Chart, req); err != nil {
+			return err
+		}
+	}
+
+	vals := chrt.Values
+	if x.ValuesPatch != nil {
+		if x.ValuesFile != "" {
+			for _, f := range chrt.Raw {
+				if f.Name == x.ValuesFile {
+					if err := yamllib.Unmarshal(f.Data, &vals); err != nil {
+						return fmt.Errorf("cannot load %s. Reason: %v", f.Name, err.Error())
+					}
+					break
+				}
+			}
+		}
+		values, err := json.Marshal(vals)
+		if err != nil {
+			return err
+		}
+
+		patchData, err := json.Marshal(x.ValuesPatch)
+		if err != nil {
+			return err
+		}
+		patch, err := jsonpatch.DecodePatch(patchData)
+		if err != nil {
+			return err
+		}
+		modifiedValues, err := patch.Apply(values)
+		if err != nil {
+			return err
+		}
+		err = json.Unmarshal(modifiedValues, &vals)
+		if err != nil {
+			return err
+		}
+	} else if x.Values != nil {
+		vals = x.Values
+	}
+
+	// Pre-install anything in the crd/ directory. We do this before Helm
+	// contacts the upstream server and builds the capabilities object.
+	if crds := chrt.CRDObjects(); len(crds) > 0 {
+		for _, crd := range crds {
+			x.CRDs = append(x.CRDs, chart.File{
+				Name: crd.Filename,
+				Data: crd.File.Data,
+			})
+		}
+	}
+
+	if err := chartutil.ProcessDependencies(chrt.Chart, vals); err != nil {
+		return err
+	}
+
+	caps := chartutil.DefaultCapabilities
+	if x.KubeVersion != "" {
+		infoPtr, err := semver.NewVersion(x.KubeVersion)
+		if err != nil {
+			return err
+		}
+		info := *infoPtr
+		info, _ = info.SetPrerelease("")
+		info, _ = info.SetMetadata("")
+		caps.KubeVersion = chartutil.KubeVersion{
+			Version: info.Original(),
+			Major:   strconv.FormatUint(info.Major(), 10),
+			Minor:   strconv.FormatUint(info.Minor(), 10),
+		}
+	}
+	options := chartutil.ReleaseOptions{
+		Name:      x.ReleaseName,
+		Namespace: x.Namespace,
+		Revision:  1,
+		IsInstall: true,
+	}
+	valuesToRender, err := chartutil.ToRenderValues(chrt.Chart, vals, options, caps)
+	if err != nil {
+		return err
+	}
+	if x.Values != nil {
+		valuesToRender["Values"] = x.Values
+	}
+
+	hooks, manifests, err := libchart.RenderResources(chrt.Chart, caps, valuesToRender)
+	if err != nil {
+		return err
+	}
+
+	var manifestDoc bytes.Buffer
+
+	for _, hook := range hooks {
+		if libchart.IsEvent(hook.Events, release.HookPreInstall) {
+			// TODO: Mark as pre-install hook
+			_, err = fmt.Fprintf(&manifestDoc, "---\n# Source: %s\n%s\n", hook.Path, hook.Manifest)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	for _, m := range manifests {
+		_, err = fmt.Fprintf(&manifestDoc, "---\n# Source: %s\n%s\n", m.Name, m.Content)
+		if err != nil {
+			return err
+		}
+	}
+
+	for _, hook := range hooks {
+		if libchart.IsEvent(hook.Events, release.HookPostInstall) {
+			// TODO: Mark as post-install hook
+			_, err = fmt.Fprintf(&manifestDoc, "---\n# Source: %s\n%s\n", hook.Path, hook.Manifest)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	{
+		x.Manifest = &chart.File{
+			Name: "manifest.yaml",
+			Data: manifestDoc.Bytes(),
+		}
+	}
+
+	return nil
+}
+
+func (x *ChartRenderer) Result() (crds []chart.File, manifest *chart.File) {
+	crds = x.CRDs
+	manifest = x.Manifest
+
+	return
 }

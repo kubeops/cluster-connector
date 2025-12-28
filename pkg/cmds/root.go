@@ -19,8 +19,6 @@ package cmds
 import (
 	"github.com/spf13/cobra"
 	v "gomodules.xyz/x/version"
-	clientsetscheme "k8s.io/client-go/kubernetes/scheme"
-	"kmodules.xyz/custom-resources/apis/auditor/install"
 )
 
 func NewRootCmd() *cobra.Command {
@@ -28,9 +26,6 @@ func NewRootCmd() *cobra.Command {
 		Use:               "cluster-connector [command]",
 		Short:             `Kubernetes Cluster Connector by AppsCode`,
 		DisableAutoGenTag: true,
-		PersistentPreRun: func(c *cobra.Command, args []string) {
-			install.Install(clientsetscheme.Scheme)
-		},
 	}
 
 	rootCmd.AddCommand(v.NewCmdVersion())

@@ -29,15 +29,15 @@ type OpsPathMapper interface {
 	HorizontalPathMapping() map[OpsReqPath]ReferencedObjPath
 	VerticalPathMapping() map[OpsReqPath]ReferencedObjPath
 	VolumeExpansionPathMapping() map[OpsReqPath]ReferencedObjPath
-	GetReferencedDbObjectPath() []string
+	GetAppRefPath() []string
 	GroupVersionKind() schema.GroupVersionKind
 }
 
 type (
 	OpsReqPath        string
 	ReferencedObjPath string
-	ScaledObject      map[string]interface{}
-	OpsReqObject      map[string]interface{}
+	ScaledObject      map[string]any
+	OpsReqObject      map[string]any
 )
 
 var (

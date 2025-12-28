@@ -41,8 +41,8 @@ type Elasticsearch struct{}
 
 func (r Elasticsearch) ResourceCalculator() api.ResourceCalculator {
 	return &api.ResourceCalculatorFuncs{
-		AppRoles:               []api.PodRole{api.PodRoleDefault},
-		RuntimeRoles:           []api.PodRole{api.PodRoleDefault, api.PodRoleExporter},
+		AppRoles:               []api.PodRole{api.PodRoleDefault, api.PodRoleMaster, api.PodRoleIngest, api.PodRoleData, api.PodRoleDataContent, api.PodRoleDataCold, api.PodRoleDataHot, api.PodRoleDataWarm, api.PodRoleDataFrozen, api.PodRoleML, api.PodRoleTransform, api.PodRoleCoordinating},
+		RuntimeRoles:           []api.PodRole{api.PodRoleDefault, api.PodRoleMaster, api.PodRoleIngest, api.PodRoleData, api.PodRoleDataContent, api.PodRoleDataCold, api.PodRoleDataHot, api.PodRoleDataWarm, api.PodRoleDataFrozen, api.PodRoleML, api.PodRoleTransform, api.PodRoleCoordinating, api.PodRoleExporter},
 		RoleReplicasFn:         r.roleReplicasFn,
 		ModeFn:                 r.modeFn,
 		UsesTLSFn:              r.usesTLSFn,
@@ -51,7 +51,7 @@ func (r Elasticsearch) ResourceCalculator() api.ResourceCalculator {
 	}
 }
 
-func (r Elasticsearch) roleReplicasFn(obj map[string]interface{}) (api.ReplicaList, error) {
+func (r Elasticsearch) roleReplicasFn(obj map[string]any) (api.ReplicaList, error) {
 	result := api.ReplicaList{}
 
 	topology, found, err := unstructured.NestedMap(obj, "spec", "topology")
@@ -59,18 +59,15 @@ func (r Elasticsearch) roleReplicasFn(obj map[string]interface{}) (api.ReplicaLi
 		return nil, err
 	}
 	if found && topology != nil {
-		var replicas int64 = 0
 		for role, roleSpec := range topology {
-			roleReplicas, found, err := unstructured.NestedInt64(roleSpec.(map[string]interface{}), "replicas")
+			roleReplicas, found, err := unstructured.NestedInt64(roleSpec.(map[string]any), "replicas")
 			if err != nil {
 				return nil, err
 			}
 			if found {
 				result[api.PodRole(role)] = roleReplicas
-				replicas += roleReplicas
 			}
 		}
-		result[api.PodRoleDefault] = replicas
 	} else {
 		// Combined mode
 		replicas, found, err := unstructured.NestedInt64(obj, "spec", "replicas")
@@ -86,7 +83,7 @@ func (r Elasticsearch) roleReplicasFn(obj map[string]interface{}) (api.ReplicaLi
 	return result, nil
 }
 
-func (r Elasticsearch) modeFn(obj map[string]interface{}) (string, error) {
+func (r Elasticsearch) modeFn(obj map[string]any) (string, error) {
 	topology, found, err := unstructured.NestedFieldNoCopy(obj, "spec", "topology")
 	if err != nil {
 		return "", err
@@ -97,13 +94,13 @@ func (r Elasticsearch) modeFn(obj map[string]interface{}) (string, error) {
 	return DBModeCombined, nil
 }
 
-func (r Elasticsearch) usesTLSFn(obj map[string]interface{}) (bool, error) {
+func (r Elasticsearch) usesTLSFn(obj map[string]any) (bool, error) {
 	_, found, err := unstructured.NestedFieldNoCopy(obj, "spec", "enableSSL")
 	return found, err
 }
 
-func (r Elasticsearch) roleResourceFn(fn func(rr core.ResourceRequirements) core.ResourceList) func(obj map[string]interface{}) (map[api.PodRole]core.ResourceList, error) {
-	return func(obj map[string]interface{}) (map[api.PodRole]core.ResourceList, error) {
+func (r Elasticsearch) roleResourceFn(fn func(rr core.ResourceRequirements) core.ResourceList) func(obj map[string]any) (map[api.PodRole]api.PodInfo, error) {
+	return func(obj map[string]any) (map[api.PodRole]api.PodInfo, error) {
 		exporter, err := api.ContainerResources(obj, fn, "spec", "monitor", "prometheus", "exporter")
 		if err != nil {
 			return nil, err
@@ -115,22 +112,18 @@ func (r Elasticsearch) roleResourceFn(fn func(rr core.ResourceRequirements) core
 		}
 		if found && topology != nil {
 			var replicas int64 = 0
-			var totalResources core.ResourceList
-			result := map[api.PodRole]core.ResourceList{}
+			result := map[api.PodRole]api.PodInfo{}
 
 			for role, roleSpec := range topology {
-				rolePerReplicaResources, roleReplicas, err := ElasticsearchNodeResources(roleSpec.(map[string]interface{}), fn)
+				rolePerReplicaResources, roleReplicas, err := ElasticsearchNodeResources(roleSpec.(map[string]any), fn)
 				if err != nil {
 					return nil, err
 				}
-
-				roleResources := api.MulResourceList(rolePerReplicaResources, roleReplicas)
-				result[api.PodRole(role)] = roleResources
-				totalResources = api.AddResourceList(totalResources, roleResources)
+				replicas += roleReplicas
+				result[api.PodRole(role)] = api.PodInfo{Resource: rolePerReplicaResources, Replicas: roleReplicas}
 			}
 
-			result[api.PodRoleDefault] = totalResources
-			result[api.PodRoleExporter] = api.MulResourceList(exporter, replicas)
+			result[api.PodRoleExporter] = api.PodInfo{Resource: exporter, Replicas: replicas}
 			return result, nil
 		}
 
@@ -140,9 +133,9 @@ func (r Elasticsearch) roleResourceFn(fn func(rr core.ResourceRequirements) core
 			return nil, err
 		}
 
-		return map[api.PodRole]core.ResourceList{
-			api.PodRoleDefault:  api.MulResourceList(container, replicas),
-			api.PodRoleExporter: api.MulResourceList(exporter, replicas),
+		return map[api.PodRole]api.PodInfo{
+			api.PodRoleDefault:  {Resource: container, Replicas: replicas},
+			api.PodRoleExporter: {Resource: exporter, Replicas: replicas},
 		}, nil
 	}
 }
@@ -154,7 +147,7 @@ type ElasticsearchNode struct {
 }
 
 func ElasticsearchNodeResources(
-	obj map[string]interface{},
+	obj map[string]any,
 	fn func(rr core.ResourceRequirements) core.ResourceList,
 	fields ...string,
 ) (core.ResourceList, int64, error) {
@@ -164,7 +157,7 @@ func ElasticsearchNodeResources(
 	}
 
 	var node ElasticsearchNode
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(val.(map[string]interface{}), &node)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(val.(map[string]any), &node)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to parse node %#v: %w", node, err)
 	}

@@ -39,12 +39,12 @@ func (r CronJob) ResourceCalculator() api.ResourceCalculator {
 	}
 }
 
-func (_ CronJob) roleReplicasFn(obj map[string]interface{}) (api.ReplicaList, error) {
+func (CronJob) roleReplicasFn(obj map[string]any) (api.ReplicaList, error) {
 	return nil, nil
 }
 
-func (r CronJob) roleResourceFn(fn func(rr core.ResourceRequirements) core.ResourceList) func(obj map[string]interface{}) (map[api.PodRole]core.ResourceList, error) {
-	return func(obj map[string]interface{}) (map[api.PodRole]core.ResourceList, error) {
+func (r CronJob) roleResourceFn(fn func(rr core.ResourceRequirements) core.ResourceList) func(obj map[string]any) (map[api.PodRole]api.PodInfo, error) {
+	return func(obj map[string]any) (map[api.PodRole]api.PodInfo, error) {
 		containers, err := api.AggregateContainerResources(obj, fn, api.AddResourceList, "spec", "jobTemplate", "spec", "template", "spec", "containers")
 		if err != nil {
 			return nil, err
@@ -53,9 +53,9 @@ func (r CronJob) roleResourceFn(fn func(rr core.ResourceRequirements) core.Resou
 		if err != nil {
 			return nil, err
 		}
-		return map[api.PodRole]core.ResourceList{
-			api.PodRoleDefault: containers,
-			api.PodRoleInit:    initContainers,
+		return map[api.PodRole]api.PodInfo{
+			api.PodRoleDefault: {Resource: containers, Replicas: 1},
+			api.PodRoleInit:    {Resource: initContainers, Replicas: 1},
 		}, nil
 	}
 }

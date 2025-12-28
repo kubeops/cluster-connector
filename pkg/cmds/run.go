@@ -45,8 +45,6 @@ import (
 	"k8s.io/klog/v2/klogr"
 	clustermeta "kmodules.xyz/client-go/cluster"
 	"kmodules.xyz/client-go/meta"
-	_ "kmodules.xyz/client-go/meta"
-	"kmodules.xyz/client-go/tools/clusterid"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
@@ -147,7 +145,7 @@ func NewCmdRun() *cobra.Command {
 	}
 
 	meta.AddLabelBlacklistFlag(cmd.Flags())
-	clusterid.AddFlags(cmd.Flags())
+	clustermeta.AddFlags(cmd.Flags())
 	cmd.Flags().StringVar(&baseURL, "baseURL", baseURL, "License server base url")
 	cmd.Flags().StringVar(&linkID, "link-id", linkID, "Link id")
 	cmd.Flags().StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
@@ -160,7 +158,7 @@ func NewCmdRun() *cobra.Command {
 }
 
 var pool = sync.Pool{
-	New: func() interface{} {
+	New: func() any {
 		// https://docs.nats.io/reference/faq#is-there-a-message-size-limitation-in-nats
 		return bufio.NewWriterSize(nil, 8*1024) // 8 KB
 	},
@@ -350,7 +348,7 @@ func (cb *callback) Start(context.Context) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck
 
 	data, err = io.ReadAll(resp.Body)
 	if err != nil {

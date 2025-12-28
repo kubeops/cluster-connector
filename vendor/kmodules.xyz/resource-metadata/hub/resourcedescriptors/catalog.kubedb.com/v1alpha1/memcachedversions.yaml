@@ -1,7 +1,6 @@
 apiVersion: meta.k8s.appscode.com/v1alpha1
 kind: ResourceDescriptor
 metadata:
-  creationTimestamp: null
   labels:
     k8s.io/group: catalog.kubedb.com
     k8s.io/kind: MemcachedVersion
@@ -58,6 +57,8 @@ spec:
               type: object
             deprecated:
               type: boolean
+            endOfLife:
+              type: boolean
             exporter:
               properties:
                 image:
@@ -77,6 +78,32 @@ spec:
                 runAsUser:
                   format: int64
                   type: integer
+              type: object
+            ui:
+              items:
+                properties:
+                  disable:
+                    type: boolean
+                  name:
+                    type: string
+                  values:
+                    x-kubernetes-preserve-unknown-fields: true
+                  version:
+                    type: string
+                required:
+                - name
+                type: object
+              type: array
+            updateConstraints:
+              properties:
+                allowlist:
+                  items:
+                    type: string
+                  type: array
+                denylist:
+                  items:
+                    type: string
+                  type: array
               type: object
             version:
               type: string

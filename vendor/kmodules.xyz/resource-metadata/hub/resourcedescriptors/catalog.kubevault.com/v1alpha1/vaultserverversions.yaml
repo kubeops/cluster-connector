@@ -1,7 +1,6 @@
 apiVersion: meta.k8s.appscode.com/v1alpha1
 kind: ResourceDescriptor
 metadata:
-  creationTimestamp: null
   labels:
     k8s.io/group: catalog.kubevault.com
     k8s.io/kind: VaultServerVersion
@@ -19,14 +18,19 @@ spec:
     openAPIV3Schema:
       properties:
         apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          description: |-
+            APIVersion defines the versioned schema of this representation of an object.
+            Servers should convert recognized schemas to the latest internal value, and
+            may reject unrecognized values.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
           type: string
         kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          description: |-
+            Kind is a string value representing the REST resource this object represents.
+            Servers may infer this from the endpoint the client submits requests to.
+            Cannot be updated.
+            In CamelCase.
+            More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
           type: string
         metadata:
           properties:
@@ -60,8 +64,27 @@ spec:
               description: Deprecated versions usable but regarded as obsolete and
                 best avoided, typically due to having been superseded.
               type: boolean
+            distribution:
+              description: Distribution
+              enum:
+              - Vault
+              - OpenBao
+              type: string
             exporter:
               description: Exporter Image
+              properties:
+                image:
+                  description: Image is the Docker image name
+                  type: string
+                imagePullPolicy:
+                  description: ImagePullPolicy one of Always, Never, IfNotPresent.
+                    It defaults to Always if :latest is used, or IfNotPresent otherwise.
+                  type: string
+              required:
+              - image
+              type: object
+            initContainer:
+              description: init container image
               properties:
                 image:
                   description: Image is the Docker image name

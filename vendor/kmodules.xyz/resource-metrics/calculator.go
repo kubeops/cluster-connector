@@ -22,6 +22,8 @@ import (
 	_ "kmodules.xyz/resource-metrics/batch/v1"
 	_ "kmodules.xyz/resource-metrics/batch/v1beta1"
 	_ "kmodules.xyz/resource-metrics/core/v1"
+	_ "kmodules.xyz/resource-metrics/kafka.kubedb.com/v1alpha1"
+	_ "kmodules.xyz/resource-metrics/kubedb.com/v1"
 	_ "kmodules.xyz/resource-metrics/kubedb.com/v1alpha2"
 	_ "kmodules.xyz/resource-metrics/kubevault.com/v1alpha2"
 	_ "kmodules.xyz/resource-metrics/ops.kubedb.com/v1alpha1"
@@ -29,7 +31,7 @@ import (
 	core "k8s.io/api/core/v1"
 )
 
-func Replicas(obj map[string]interface{}) (int64, error) {
+func Replicas(obj map[string]any) (int64, error) {
 	c, err := api.Load(obj)
 	if err != nil {
 		return 0, err
@@ -37,7 +39,7 @@ func Replicas(obj map[string]interface{}) (int64, error) {
 	return c.Replicas(obj)
 }
 
-func RoleReplicas(obj map[string]interface{}) (api.ReplicaList, error) {
+func RoleReplicas(obj map[string]any) (api.ReplicaList, error) {
 	c, err := api.Load(obj)
 	if err != nil {
 		return nil, err
@@ -45,7 +47,7 @@ func RoleReplicas(obj map[string]interface{}) (api.ReplicaList, error) {
 	return c.RoleReplicas(obj)
 }
 
-func Mode(obj map[string]interface{}) (string, error) {
+func Mode(obj map[string]any) (string, error) {
 	c, err := api.Load(obj)
 	if err != nil {
 		return "", err
@@ -53,7 +55,7 @@ func Mode(obj map[string]interface{}) (string, error) {
 	return c.Mode(obj)
 }
 
-func UsesTLS(obj map[string]interface{}) (bool, error) {
+func UsesTLS(obj map[string]any) (bool, error) {
 	c, err := api.Load(obj)
 	if err != nil {
 		return false, err
@@ -61,7 +63,7 @@ func UsesTLS(obj map[string]interface{}) (bool, error) {
 	return c.UsesTLS(obj)
 }
 
-func TotalResourceLimits(obj map[string]interface{}) (core.ResourceList, error) {
+func TotalResourceLimits(obj map[string]any) (core.ResourceList, error) {
 	c, err := api.Load(obj)
 	if err != nil {
 		return nil, err
@@ -69,7 +71,7 @@ func TotalResourceLimits(obj map[string]interface{}) (core.ResourceList, error) 
 	return c.TotalResourceLimits(obj)
 }
 
-func TotalResourceRequests(obj map[string]interface{}) (core.ResourceList, error) {
+func TotalResourceRequests(obj map[string]any) (core.ResourceList, error) {
 	c, err := api.Load(obj)
 	if err != nil {
 		return nil, err
@@ -77,7 +79,7 @@ func TotalResourceRequests(obj map[string]interface{}) (core.ResourceList, error
 	return c.TotalResourceRequests(obj)
 }
 
-func AppResourceLimits(obj map[string]interface{}) (core.ResourceList, error) {
+func AppResourceLimits(obj map[string]any) (core.ResourceList, error) {
 	c, err := api.Load(obj)
 	if err != nil {
 		return nil, err
@@ -85,7 +87,7 @@ func AppResourceLimits(obj map[string]interface{}) (core.ResourceList, error) {
 	return c.AppResourceLimits(obj)
 }
 
-func AppResourceRequests(obj map[string]interface{}) (core.ResourceList, error) {
+func AppResourceRequests(obj map[string]any) (core.ResourceList, error) {
 	c, err := api.Load(obj)
 	if err != nil {
 		return nil, err
@@ -93,7 +95,7 @@ func AppResourceRequests(obj map[string]interface{}) (core.ResourceList, error) 
 	return c.AppResourceRequests(obj)
 }
 
-func RoleResourceLimits(obj map[string]interface{}) (map[api.PodRole]core.ResourceList, error) {
+func RoleResourceLimits(obj map[string]any) (map[api.PodRole]core.ResourceList, error) {
 	c, err := api.Load(obj)
 	if err != nil {
 		return nil, err
@@ -101,10 +103,26 @@ func RoleResourceLimits(obj map[string]interface{}) (map[api.PodRole]core.Resour
 	return c.RoleResourceLimits(obj)
 }
 
-func RoleResourceRequests(obj map[string]interface{}) (map[api.PodRole]core.ResourceList, error) {
+func RoleResourceRequests(obj map[string]any) (map[api.PodRole]core.ResourceList, error) {
 	c, err := api.Load(obj)
 	if err != nil {
 		return nil, err
 	}
 	return c.RoleResourceRequests(obj)
+}
+
+func PodResourceLimits(obj map[string]any) (core.ResourceList, error) {
+	c, err := api.Load(obj)
+	if err != nil {
+		return nil, err
+	}
+	return c.PodResourceLimits(obj)
+}
+
+func PodResourceRequests(obj map[string]any) (core.ResourceList, error) {
+	c, err := api.Load(obj)
+	if err != nil {
+		return nil, err
+	}
+	return c.PodResourceRequests(obj)
 }

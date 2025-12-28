@@ -13,13 +13,13 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func GetValuesDiff(original, modified map[string]interface{}) (map[string]interface{}, error) {
+func GetValuesMapDiff(original, modified map[string]any) (map[string]any, error) {
 	return getValuesDiff(original, modified, "", nil)
 }
 
-func getValuesDiff(original, modified map[string]interface{}, prefix string, diff map[string]interface{}) (map[string]interface{}, error) {
+func getValuesDiff(original, modified map[string]any, prefix string, diff map[string]any) (map[string]any, error) {
 	if diff == nil {
-		diff = map[string]interface{}{}
+		diff = map[string]any{}
 	}
 
 	for k, v := range modified {
@@ -31,10 +31,10 @@ func getValuesDiff(original, modified map[string]interface{}, prefix string, dif
 		}
 
 		switch val := v.(type) {
-		case map[string]interface{}:
-			oVal, ok := original[k].(map[string]interface{})
+		case map[string]any:
+			oVal, ok := original[k].(map[string]any)
 			if !ok {
-				oVal = map[string]interface{}{}
+				oVal = map[string]any{}
 			}
 
 			d2, err := getValuesDiff(oVal, val, curKey, nil)
@@ -44,8 +44,8 @@ func getValuesDiff(original, modified map[string]interface{}, prefix string, dif
 			if len(d2) > 0 {
 				diff[k] = d2
 			}
-		case []interface{}, string, int8, uint8, int16, uint16, int32, uint32, int64, uint64, int, uint, float32, float64, bool, json.Number, nil:
-			if !reflect.DeepEqual(original[k], val) {
+		case []any, string, int8, uint8, int16, uint16, int32, uint32, int64, uint64, int, uint, float32, float64, bool, json.Number, nil:
+			if origVal, ok := original[k]; !ok || !reflect.DeepEqual(origVal, val) {
 				diff[k] = val
 			}
 		default:
@@ -71,37 +71,54 @@ func getValuesDiff(original, modified map[string]interface{}, prefix string, dif
 	return diff, nil
 }
 
-func GetValuesDiffYAML(orig, od interface{}) ([]byte, error) {
-	origMap, err := toJson(orig)
+func GetValuesDiff(orig, od any) (map[string]any, error) {
+	origMap, err := kj.ToJsonMap(orig)
 	if err != nil {
 		return nil, err
 	}
-	modMap, err := toJson(od)
+	modMap, err := kj.ToJsonMap(od)
 	if err != nil {
 		return nil, err
 	}
 
-	diff, err := GetValuesDiff(origMap, modMap)
+	return GetValuesMapDiff(origMap, modMap)
+}
+
+func GetValuesDiffYAML(orig, od any) ([]byte, error) {
+	origMap, err := kj.ToJsonMap(orig)
+	if err != nil {
+		return nil, err
+	}
+	modMap, err := kj.ToJsonMap(od)
+	if err != nil {
+		return nil, err
+	}
+
+	diff, err := GetValuesMapDiff(origMap, modMap)
 	if err != nil {
 		return nil, err
 	}
 	return yaml.Marshal(diff)
 }
 
-func toJson(v interface{}) (map[string]interface{}, error) {
-	data, err := kj.Marshal(v)
+func GetValuesDiffJson(orig, od any) ([]byte, error) {
+	origMap, err := kj.ToJsonMap(orig)
 	if err != nil {
 		return nil, err
 	}
-	var out map[string]interface{}
-	err = kj.Unmarshal(data, &out)
+	modMap, err := kj.ToJsonMap(od)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+
+	diff, err := GetValuesMapDiff(origMap, modMap)
+	if err != nil {
+		return nil, err
+	}
+	return kj.Marshal(diff)
 }
 
-func GetChangedValues(original, modified map[string]interface{}) ([]string, error) {
+func GetChangedValues(original, modified map[string]any) ([]string, error) {
 	cmds, err := getChangedValues(original, modified, "", nil)
 	if err != nil {
 		return nil, err
@@ -110,7 +127,7 @@ func GetChangedValues(original, modified map[string]interface{}) ([]string, erro
 	return cmds, nil
 }
 
-func getChangedValues(original, modified map[string]interface{}, prefix string, cmds []string) ([]string, error) {
+func getChangedValues(original, modified map[string]any, prefix string, cmds []string) ([]string, error) {
 	for k, v := range modified {
 		curKey := ""
 		if prefix == "" {
@@ -120,17 +137,17 @@ func getChangedValues(original, modified map[string]interface{}, prefix string, 
 		}
 
 		switch val := v.(type) {
-		case map[string]interface{}:
-			oVal, ok := original[k].(map[string]interface{})
+		case map[string]any:
+			oVal, ok := original[k].(map[string]any)
 			if !ok {
-				oVal = map[string]interface{}{}
+				oVal = map[string]any{}
 			}
 			next, err := getChangedValues(oVal, val, curKey, nil)
 			if err != nil {
 				return nil, err
 			}
 			cmds = append(cmds, next...)
-		case []interface{}:
+		case []any:
 			if !reflect.DeepEqual(v, original[k]) {
 				if len(val) == 0 {
 					cmds = append(cmds, fmt.Sprintf("%s=null", curKey))
@@ -147,11 +164,11 @@ func getChangedValues(original, modified map[string]interface{}, prefix string, 
 				}
 
 				for i, element := range val {
-					em, ok := element.(map[string]interface{})
+					em, ok := element.(map[string]any)
 					if !ok {
 						return nil, fmt.Errorf("%s[%d] element is not a map", curKey, i)
 					}
-					next, err := getChangedValues(map[string]interface{}{}, em, fmt.Sprintf("%s[%d]", curKey, i), nil)
+					next, err := getChangedValues(map[string]any{}, em, fmt.Sprintf("%s[%d]", curKey, i), nil)
 					if err != nil {
 						return nil, err
 					}
@@ -167,7 +184,7 @@ func getChangedValues(original, modified map[string]interface{}, prefix string, 
 				cmds = append(cmds, fmt.Sprintf("%s=%v", curKey, val))
 			}
 		case nil:
-			if !reflect.DeepEqual(original[k], val) {
+			if origVal, ok := original[k]; !ok || !reflect.DeepEqual(origVal, val) {
 				cmds = append(cmds, fmt.Sprintf("%s=null", curKey))
 			}
 		default:
@@ -200,7 +217,7 @@ func escapeValue(s string) string {
 	return shellescape.Quote(strings.ReplaceAll(strings.ReplaceAll(s, `\`, `\\`), `,`, `\,`))
 }
 
-func isSimpleArray(a []interface{}) bool {
+func isSimpleArray(a []any) bool {
 	for i := range a {
 		switch a[i].(type) {
 		case string, int8, uint8, int16, uint16, int32, uint32, int64, uint64, int, uint, float32, float64, bool, nil, json.Number:
@@ -211,7 +228,7 @@ func isSimpleArray(a []interface{}) bool {
 	return true
 }
 
-func PrintArray(a []interface{}) (string, error) {
+func PrintArray(a []any) (string, error) {
 	var buf bytes.Buffer
 	buf.WriteRune('{')
 	for i := range a {

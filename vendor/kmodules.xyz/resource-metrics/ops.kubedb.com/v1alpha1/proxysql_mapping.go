@@ -42,8 +42,8 @@ func (m *ProxySQLOpsRequest) VolumeExpansionPathMapping() map[OpsReqPath]Referen
 	return map[OpsReqPath]ReferencedObjPath{}
 }
 
-func (m *ProxySQLOpsRequest) GetReferencedDbObjectPath() []string {
-	return []string{"spec", "proxyRef", "referencedDB"}
+func (m *ProxySQLOpsRequest) GetAppRefPath() []string {
+	return []string{"spec", "proxyRef"}
 }
 
 func (m *ProxySQLOpsRequest) GroupVersionKind() schema.GroupVersionKind {

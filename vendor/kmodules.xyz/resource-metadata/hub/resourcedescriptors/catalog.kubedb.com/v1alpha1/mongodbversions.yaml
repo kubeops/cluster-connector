@@ -1,7 +1,6 @@
 apiVersion: meta.k8s.appscode.com/v1alpha1
 kind: ResourceDescriptor
 metadata:
-  creationTimestamp: null
   labels:
     k8s.io/group: catalog.kubedb.com
     k8s.io/kind: MongoDBVersion
@@ -58,9 +57,25 @@ spec:
                       - mongodb-addon
                       - postgres-addon
                       - mysql-addon
+                      - mariadb-addon
+                      - mssqlserver-addon
                       type: string
                     tasks:
                       properties:
+                        fullBackup:
+                          properties:
+                            name:
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        fullBackupRestore:
+                          properties:
+                            name:
+                              type: string
+                          required:
+                          - name
+                          type: object
                         manifestBackup:
                           properties:
                             name:
@@ -108,6 +123,8 @@ spec:
               - KubeDB
               - MongoDB
               type: string
+            endOfLife:
+              type: boolean
             exporter:
               properties:
                 image:
@@ -199,6 +216,21 @@ spec:
                   - restoreTask
                   type: object
               type: object
+            ui:
+              items:
+                properties:
+                  disable:
+                    type: boolean
+                  name:
+                    type: string
+                  values:
+                    x-kubernetes-preserve-unknown-fields: true
+                  version:
+                    type: string
+                required:
+                - name
+                type: object
+              type: array
             updateConstraints:
               properties:
                 allowlist:

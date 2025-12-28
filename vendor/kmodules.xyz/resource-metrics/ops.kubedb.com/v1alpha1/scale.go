@@ -18,19 +18,20 @@ package v1alpha1
 
 import (
 	"errors"
-	"fmt"
 	"strings"
+
+	"kmodules.xyz/resource-metrics/api"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func GetScaledObject(opsObj map[string]interface{}) (ScaledObject, error) {
+func GetScaledObject(opsObj map[string]any) (ScaledObject, error) {
 	opsPathMapper, err := LoadOpsPathMapper(opsObj)
 	if err != nil {
 		return nil, err
 	}
-	dbObj, err := extractReferencedObject(opsObj, opsPathMapper.GetReferencedDbObjectPath()...)
+	dbObj, err := extractReferencedObject(opsObj, opsPathMapper.GetAppRefPath()...)
 	if err != nil {
 		return nil, err
 	}
@@ -63,26 +64,33 @@ func splitPathToSlice(path string) []string {
 	return strings.Split(path, ".")
 }
 
-func extractReferencedObject(opsObj map[string]interface{}, refDbPath ...string) (map[string]interface{}, error) {
+func extractReferencedObject(opsObj map[string]any, refDbPath ...string) (map[string]any, error) {
 	if len(refDbPath) == 0 {
-		refDbPath = []string{"spec", "databaseRef", "referencedDB"}
+		return nil, errors.New("refDbPath is empty")
 	}
 	dbObj, found, _ := unstructured.NestedMap(opsObj, refDbPath...)
 	if !found {
-		return nil, errors.New("referenced db object not found")
+		return nil, api.ErrMissingRefObject
+	}
+
+	_, foundApiVersion := dbObj["apiVersion"]
+	_, foundKind := dbObj["kind"]
+	_, foundMetadata := dbObj["metadata"]
+	if !foundApiVersion || !foundKind || !foundMetadata {
+		return nil, api.ErrMissingRefObject
 	}
 
 	return dbObj, nil
 }
 
-func getGVK(obj map[string]interface{}) schema.GroupVersionKind {
+func getGVK(obj map[string]any) schema.GroupVersionKind {
 	var unObj unstructured.Unstructured
 	unObj.SetUnstructuredContent(obj)
 
 	return unObj.GroupVersionKind()
 }
 
-func getScalingType(opsObj map[string]interface{}) (string, error) {
+func getScalingType(opsObj map[string]any) (string, error) {
 	tp, found, _ := unstructured.NestedString(opsObj, "spec", "type")
 	if !found {
 		return "", errors.New("scaling type not found")
@@ -106,5 +114,5 @@ func getMapping(opsObj OpsReqObject, opsMapper OpsPathMapper) (map[OpsReqPath]Re
 		return opsMapper.VolumeExpansionPathMapping(), nil
 	}
 
-	return nil, fmt.Errorf("scaling type `%s` not supported", scalingType)
+	return nil, nil
 }

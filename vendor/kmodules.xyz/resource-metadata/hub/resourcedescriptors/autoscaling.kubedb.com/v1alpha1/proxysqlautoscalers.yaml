@@ -1,7 +1,6 @@
 apiVersion: meta.k8s.appscode.com/v1alpha1
 kind: ResourceDescriptor
 metadata:
-  creationTimestamp: null
   labels:
     k8s.io/group: autoscaling.kubedb.com
     k8s.io/kind: ProxySQLAutoscaler
@@ -117,6 +116,13 @@ spec:
                       type: string
                   type: object
               type: object
+            databaseRef:
+              properties:
+                name:
+                  default: ""
+                  type: string
+              type: object
+              x-kubernetes-map-type: atomic
             opsRequestOptions:
               properties:
                 apply:
@@ -128,13 +134,7 @@ spec:
                 timeout:
                   type: string
               type: object
-            proxyRef:
-              properties:
-                name:
-                  type: string
-              type: object
-              x-kubernetes-map-type: atomic
           required:
-          - proxyRef
+          - databaseRef
           type: object
       type: object

@@ -6,8 +6,8 @@ import (
 	"sort"
 	"strings"
 
-	fluxhelm "github.com/fluxcd/helm-controller/api/v2beta1"
-	fluxsrc "github.com/fluxcd/source-controller/api/v1beta2"
+	fluxhelm "github.com/fluxcd/helm-controller/api/v2"
+	fluxsrc "github.com/fluxcd/source-controller/api/v1"
 	"github.com/gobuffalo/flect"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
@@ -22,6 +22,7 @@ import (
 	apiregistrationapi "k8s.io/kube-aggregator/pkg/apis/apiregistration/v1"
 	"kmodules.xyz/client-go/discovery"
 	uiapi "kmodules.xyz/resource-metadata/apis/ui/v1alpha1"
+	"kmodules.xyz/resource-metadata/hub"
 	"kmodules.xyz/resource-metadata/hub/resourceeditors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -31,7 +32,7 @@ import (
 	releasesapi "x-helm.dev/apimachinery/apis/releases/v1alpha1"
 )
 
-func debug(format string, v ...interface{}) {
+func debug(format string, v ...any) {
 	format = fmt.Sprintf("[debug] %s\n", format)
 	_ = log.Output(2, fmt.Sprintf(format, v...))
 }
@@ -111,7 +112,7 @@ func NewUncachedClientForConfig(cfg *rest.Config) (client.Client, error) {
 	})
 }
 
-func RefillMetadata(kc client.Client, ref, actual map[string]interface{}, gvr metav1.GroupVersionResource, rls types.NamespacedName) error {
+func RefillMetadata(kc client.Client, ref, actual map[string]any, gvr metav1.GroupVersionResource, rls types.NamespacedName) error {
 	// WARNING: Don't use kc.RESTMapper().KindFor to find Kind because the CRD may be yet exist in the cluster
 	rsMeta, ok, err := unstructured.NestedMap(ref, "metadata", "resource")
 	if err != nil {
@@ -120,19 +121,19 @@ func RefillMetadata(kc client.Client, ref, actual map[string]interface{}, gvr me
 		return fmt.Errorf(".metadata.resource not found in chart values")
 	}
 
-	actual["metadata"] = map[string]interface{}{
+	actual["metadata"] = map[string]any{
 		"resource": rsMeta,
-		"release": map[string]interface{}{
+		"release": map[string]any{
 			"name":      rls.Name,
 			"namespace": rls.Namespace,
 		},
 	}
 
-	refResources, ok := ref["resources"].(map[string]interface{})
+	refResources, ok := ref["resources"].(map[string]any)
 	if !ok {
 		return nil
 	}
-	actualResources, ok := actual["resources"].(map[string]interface{})
+	actualResources, ok := actual["resources"].(map[string]any)
 	if !ok {
 		return nil
 	}
@@ -157,23 +158,19 @@ func RefillMetadata(kc client.Client, ref, actual map[string]interface{}, gvr me
 		//  namespace:
 		//  labels:
 
-		refObj, ok := refResources[key].(map[string]interface{})
+		refObj, ok := refResources[key].(map[string]any)
 		if !ok {
 			if usesForm {
 				continue // in case of form, we will see form objects which are not present in the ref resources
 			}
 			return fmt.Errorf("missing key %s in reference chart values", key)
 		}
-		obj := o.(map[string]interface{})
+		obj := o.(map[string]any)
 		obj["apiVersion"] = refObj["apiVersion"]
 		obj["kind"] = refObj["kind"]
 
 		// name
-		featureset := metav1.GroupVersionResource{
-			Group:    "ui.k8s.appscode.com",
-			Resource: "featuresets",
-		}
-		if gvr.Group != featureset.Group || gvr.Resource != featureset.Resource {
+		if !hub.IsFeaturesetGR(schema.GroupResource{Group: gvr.Group, Resource: gvr.Resource}) {
 			name := rls.Name
 			idx := strings.IndexRune(key, '_')
 			if idx != -1 {
@@ -200,7 +197,7 @@ func RefillMetadata(kc client.Client, ref, actual map[string]interface{}, gvr me
 
 		gvk := schema.FromAPIVersionAndKind(refObj["apiVersion"].(string), refObj["kind"].(string))
 		if gvr, err := mapper.GVR(gvk); err == nil {
-			if ed, ok := resourceeditors.LoadByGVR(kc, gvr); ok {
+			if ed, err := resourceeditors.LoadByGVR(kc, gvr); err == nil {
 				if ed.Spec.UI != nil {
 					for _, fields := range ed.Spec.UI.InstanceLabelPaths {
 						fields := strings.Trim(fields, ".")
@@ -218,7 +215,7 @@ func RefillMetadata(kc client.Client, ref, actual map[string]interface{}, gvr me
 	return nil
 }
 
-func updateLabels(rlsName string, obj map[string]interface{}, fields ...string) error {
+func updateLabels(rlsName string, obj map[string]any, fields ...string) error {
 	labels, ok, err := unstructured.NestedStringMap(obj, fields...)
 	if err != nil {
 		return err
@@ -233,7 +230,7 @@ func updateLabels(rlsName string, obj map[string]interface{}, fields ...string) 
 	return unstructured.SetNestedStringMap(obj, labels, fields...)
 }
 
-func ExtractResourceKeys(vals map[string]interface{}) []string {
+func ExtractResourceKeys(vals map[string]any) []string {
 	if resources, ok, err := unstructured.NestedMap(vals, "resources"); err == nil && ok {
 		resourceKeys := make([]string, 0, len(resources))
 		for k := range resources {

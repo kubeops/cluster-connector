@@ -38,7 +38,7 @@ type Client struct {
 
 var _ kube.Interface = &Client{}
 
-func New(getter genericclioptions.RESTClientGetter, log func(string, ...interface{})) (*Client, error) {
+func New(getter genericclioptions.RESTClientGetter, log func(string, ...any)) (*Client, error) {
 	kc := kube.New(getter)
 	kc.Log = log
 
@@ -171,7 +171,7 @@ func (c *Client) Update(original_nee_current, target kube.ResourceList, force bo
 	case err != nil:
 		return res, err
 	case len(updateErrors) != 0:
-		return res, errors.Errorf(strings.Join(updateErrors, " && "))
+		return res, errors.New(strings.Join(updateErrors, " && "))
 	}
 
 	for _, info := range original_nee_current.Difference(target) {
@@ -266,7 +266,7 @@ func deleteResource(info *resource.Info) error {
 // We avoid check jobs because kstatus library does not report Job complete status properly
 // See https://github.com/kubernetes-sigs/cli-utils/issues/350
 func (c *Client) checkStatusExceptJobs(resources kube.ResourceList, timeout time.Duration) error {
-	factory, ok := c.Client.Factory.(cmdutil.Factory)
+	factory, ok := c.Factory.(cmdutil.Factory)
 	if !ok {
 		return fmt.Errorf("c.Client.Factory is not a cmdutil.Factory")
 	}
