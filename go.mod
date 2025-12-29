@@ -3,7 +3,7 @@ module kubeops.dev/cluster-connector
 go 1.24.0
 
 require (
-	github.com/go-chi/chi/v5 v5.0.11
+	github.com/go-chi/chi/v5 v5.2.3
 	github.com/go-logr/logr v1.4.3
 	github.com/gogo/protobuf v1.3.2
 	github.com/nats-io/nats.go v1.47.0
