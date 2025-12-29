@@ -130,7 +130,7 @@ type NatsTransport struct {
 }
 
 var pool = sync.Pool{
-	New: func() interface{} {
+	New: func() any {
 		return new(bytes.Buffer)
 	},
 }
@@ -217,7 +217,7 @@ func Proxy(req *http.Request, nc *nats.Conn, names shared.SubjectNames, data []b
 			if e2 != nil {
 				_ = w.CloseWithError(e2)
 			} else {
-				_ = w.Close()
+				_ = w.Close() // nolint:errcheck
 			}
 			_ = sub.Unsubscribe()
 		}()

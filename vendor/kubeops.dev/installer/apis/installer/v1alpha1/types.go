@@ -120,3 +120,7 @@ type TLSConfig struct {
 	ServerName            string `json:"serverName"`
 	InsecureSkipTLSVerify bool   `json:"insecureSkipTLSVerify"`
 }
+
+type NetworkPolicySpec struct {
+	Enabled bool `json:"enabled"`
+}

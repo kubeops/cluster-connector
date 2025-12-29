@@ -1,7 +1,6 @@
 apiVersion: ui.k8s.appscode.com/v1alpha1
 kind: ResourceEditor
 metadata:
-  creationTimestamp: null
   labels:
     k8s.io/group: storage.kubestash.com
     k8s.io/kind: Repository
@@ -9,6 +8,11 @@ metadata:
     k8s.io/version: v1alpha1
   name: storage.kubestash.com-v1alpha1-repositories
 spec:
+  icons:
+  - src: https://cdn.appscode.com/k8s/icons/storage.kubestash.com/repositories.svg
+    type: image/svg+xml
+  - src: https://cdn.appscode.com/k8s/icons/storage.kubestash.com/repositories.png
+    type: image/png
   resource:
     group: storage.kubestash.com
     kind: Repository
@@ -22,5 +26,12 @@ spec:
         apiGroup: source.toolkit.fluxcd.io
         kind: HelmRepository
         name: appscode-charts-oci
-      version: v0.4.18
+      version: v0.28.0
     enforceQuota: false
+    options:
+      name: storagekubestashcom-repository-editor-options
+      sourceRef:
+        apiGroup: source.toolkit.fluxcd.io
+        kind: HelmRepository
+        name: appscode-charts-oci
+      version: v0.28.0

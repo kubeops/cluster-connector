@@ -24,15 +24,16 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/nats-io/nats.go"
 	"github.com/pkg/errors"
-	proxyserver "go.bytebuilders.dev/license-proxyserver/apis/proxyserver/v1alpha1"
-	proxyclient "go.bytebuilders.dev/license-proxyserver/client/clientset/versioned"
 	verifier "go.bytebuilders.dev/license-verifier"
+	"go.bytebuilders.dev/license-verifier/apis/licenses/v1alpha1"
 	"go.bytebuilders.dev/license-verifier/info"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"go.bytebuilders.dev/license-verifier/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 )
@@ -45,10 +46,8 @@ const (
 )
 
 type NatsConfig struct {
-	LicenseID string     `json:"licenseID"`
-	Subject   string     `json:"natsSubject"`
-	Server    string     `json:"natsServer"`
-	Client    *nats.Conn `json:"-"`
+	Subject string `json:"natsSubject"`
+	Server  string `json:"natsServer"`
 }
 
 // NatsCredential represents the api response of the register licensed user api
@@ -57,79 +56,158 @@ type NatsCredential struct {
 	Credential []byte `json:"credential"`
 }
 
-func NewNatsConfig(cfg *rest.Config, clusterID string, LicenseFile string) (*NatsConfig, error) {
-	var licenseBytes []byte
-	var err error
+type NatsClient struct {
+	cfg         *rest.Config
+	clusterID   string
+	LicenseFile string
 
-	licenseBytes, err = os.ReadFile(LicenseFile)
-	if errors.Is(err, os.ErrNotExist) {
-		req := proxyserver.LicenseRequest{
-			TypeMeta: metav1.TypeMeta{},
-			Request: &proxyserver.LicenseRequestRequest{
-				Features: info.Features(),
-			},
+	le *kubernetes.LicenseEnforcer
+	l  *v1alpha1.License
+
+	nc      *nats.Conn
+	Subject string
+	Server  string
+	mu      sync.Mutex
+}
+
+func NewNatsClient(cfg *rest.Config, clusterID string, LicenseFile string) *NatsClient {
+	return &NatsClient{
+		cfg:         cfg,
+		clusterID:   clusterID,
+		LicenseFile: LicenseFile,
+	}
+}
+
+func (c *NatsClient) Request(data []byte, timeout time.Duration) (*nats.Msg, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	var justConnected bool
+	if c.nc == nil {
+		if err := c.connect(); err != nil {
+			return nil, err
 		}
-		pc, err := proxyclient.NewForConfig(cfg)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed create client for license-proxyserver")
+		justConnected = true
+	}
+	msg, err := c.nc.Request(c.Subject, data, timeout)
+	if err != nil && !justConnected && isNatsAuthError(err.Error()) {
+		if err := c.connect(); err != nil {
+			return nil, err
 		}
-		resp, err := pc.ProxyserverV1alpha1().LicenseRequests().Create(context.TODO(), &req, metav1.CreateOptions{})
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to read license")
+		msg, err = c.nc.Request(c.Subject, data, timeout)
+	}
+	return msg, err
+}
+
+// src: https://github.com/nats-io/nats.go/blob/main/nats.go#L3693-L3709
+func isNatsAuthError(e string) bool {
+	if strings.HasPrefix(e, nats.AUTHORIZATION_ERR) {
+		return true
+	}
+	if strings.HasPrefix(e, nats.AUTHENTICATION_EXPIRED_ERR) {
+		return true
+	}
+	if strings.HasPrefix(e, nats.AUTHENTICATION_REVOKED_ERR) {
+		return true
+	}
+	if strings.HasPrefix(e, nats.ACCOUNT_AUTHENTICATION_EXPIRED_ERR) {
+		return true
+	}
+	return false
+}
+
+func (c *NatsClient) GetLicenseID() (string, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.l == nil {
+		if err := c.connect(); err != nil {
+			return "", err
 		}
-		licenseBytes = []byte(resp.Response.License)
-	} else if err != nil {
-		return nil, errors.Wrap(err, "failed to read license")
+	}
+
+	if c.l.Status == v1alpha1.LicenseActive && time.Now().After(c.l.NotAfter.Time) {
+		license, _ := c.le.LoadLicense()
+		c.l = &license
+	}
+	return c.l.ID, nil
+}
+
+func (c *NatsClient) Connect() (*nats.Conn, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.nc == nil {
+		if err := c.connect(); err != nil {
+			return nil, err
+		}
+	}
+	return c.nc, nil
+}
+
+func (c *NatsClient) connect() error {
+	le, err := kubernetes.NewLicenseEnforcer(c.cfg, c.LicenseFile)
+	if err != nil {
+		return err
+	}
+	license, licenseBytes := le.LoadLicense()
+	if license.Status != v1alpha1.LicenseActive {
+		return fmt.Errorf("license status is %s", license.Status)
 	}
 
 	opts := verifier.Options{
-		ClusterUID: clusterID,
+		ClusterUID: c.clusterID,
 		Features:   info.ProductName,
 		CACert:     []byte(info.LicenseCA),
 		License:    licenseBytes,
 	}
 	data, err := json.Marshal(opts)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	resp, err := http.Post(info.MustRegistrationAPIEndpoint(), "application/json", bytes.NewReader(data))
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.New(resp.Status + ", " + string(body))
+		return errors.New(resp.Status + ", " + string(body))
 	}
 
 	var natscred NatsCredential
 	err = json.Unmarshal(body, &natscred)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	klog.V(5).InfoS("using event receiver", "address", natscred.Server, "subject", natscred.Subject, "licenseID", natscred.LicenseID)
+	klog.V(5).InfoS("using event receiver", "address", natscred.Server, "subject", natscred.Subject, "licenseID", license.ID)
 
-	natscred.Client, err = NewConnection(natscred)
+	nc, err := NewConnection(license.ID, natscred)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &natscred.NatsConfig, nil
+	c.le = le
+	c.l = &license
+	c.nc = nc
+	c.Subject = natscred.Subject
+	c.Server = natscred.Server
+	return nil
 }
 
 // NewConnection creates a new NATS connection
-func NewConnection(natscred NatsCredential) (nc *nats.Conn, err error) {
+func NewConnection(licenseID string, natscred NatsCredential) (nc *nats.Conn, err error) {
 	servers := natscred.Server
 
 	opts := []nats.Option{
-		nats.Name(fmt.Sprintf("%s.%s", natscred.LicenseID, info.ProductName)),
+		nats.Name(fmt.Sprintf("%s.%s", licenseID, info.ProductName)),
 		nats.MaxReconnects(-1),
 		nats.ErrorHandler(errorHandler),
 		nats.ReconnectHandler(reconnectHandler),

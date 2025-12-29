@@ -1,7 +1,6 @@
 apiVersion: meta.k8s.appscode.com/v1alpha1
 kind: ResourceDescriptor
 metadata:
-  creationTimestamp: null
   labels:
     k8s.io/group: catalog.kubedb.com
     k8s.io/kind: MariaDBVersion
@@ -49,6 +48,65 @@ spec:
           type: object
         spec:
           properties:
+            archiver:
+              properties:
+                addon:
+                  properties:
+                    name:
+                      enum:
+                      - mongodb-addon
+                      - postgres-addon
+                      - mysql-addon
+                      - mariadb-addon
+                      - mssqlserver-addon
+                      type: string
+                    tasks:
+                      properties:
+                        fullBackup:
+                          properties:
+                            name:
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        fullBackupRestore:
+                          properties:
+                            name:
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        manifestBackup:
+                          properties:
+                            name:
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        manifestRestore:
+                          properties:
+                            name:
+                              type: string
+                          required:
+                          - name
+                          type: object
+                        volumeSnapshot:
+                          properties:
+                            name:
+                              type: string
+                          required:
+                          - name
+                          type: object
+                      type: object
+                  type: object
+                walg:
+                  properties:
+                    image:
+                      type: string
+                  required:
+                  - image
+                  type: object
+              type: object
             coordinator:
               properties:
                 image:
@@ -64,6 +122,8 @@ spec:
               - image
               type: object
             deprecated:
+              type: boolean
+            endOfLife:
               type: boolean
             exporter:
               properties:
@@ -83,6 +143,19 @@ spec:
               properties:
                 image:
                   type: string
+              required:
+              - image
+              type: object
+            maxscale:
+              properties:
+                image:
+                  type: string
+                securityContext:
+                  properties:
+                    runAsUser:
+                      format: int64
+                      type: integer
+                  type: object
               required:
               - image
               type: object
@@ -146,6 +219,21 @@ spec:
                   - restoreTask
                   type: object
               type: object
+            ui:
+              items:
+                properties:
+                  disable:
+                    type: boolean
+                  name:
+                    type: string
+                  values:
+                    x-kubernetes-preserve-unknown-fields: true
+                  version:
+                    type: string
+                required:
+                - name
+                type: object
+              type: array
             updateConstraints:
               properties:
                 allowlist:

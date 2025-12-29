@@ -45,8 +45,8 @@ func (m *ElasticsearchOpsRequest) HorizontalPathMapping() map[OpsReqPath]Referen
 
 func (m *ElasticsearchOpsRequest) VerticalPathMapping() map[OpsReqPath]ReferencedObjPath {
 	return map[OpsReqPath]ReferencedObjPath{
-		"spec.verticalScaling.node":                  "spec.resources",
-		"spec.verticalScaling.exporter":              "spec.topology.exporter.resources",
+		"spec.verticalScaling.node":                  "spec.podTemplate.spec.resources",
+		"spec.verticalScaling.exporter":              "spec.monitor.prometheus.exporter.resources",
 		"spec.verticalScaling.topology.master":       "spec.topology.master.resources",
 		"spec.verticalScaling.topology.ingest":       "spec.topology.ingest.resources",
 		"spec.verticalScaling.topology.data":         "spec.topology.data.resources",
@@ -78,8 +78,8 @@ func (m *ElasticsearchOpsRequest) VolumeExpansionPathMapping() map[OpsReqPath]Re
 	}
 }
 
-func (m *ElasticsearchOpsRequest) GetReferencedDbObjectPath() []string {
-	return []string{"spec", "databaseRef", "referencedDB"}
+func (m *ElasticsearchOpsRequest) GetAppRefPath() []string {
+	return []string{"spec", "databaseRef"}
 }
 
 func (m *ElasticsearchOpsRequest) GroupVersionKind() schema.GroupVersionKind {

@@ -17,7 +17,18 @@ limitations under the License.
 package v1alpha1
 
 func (l License) DisableAnalytics() bool {
-	return len(l.FeatureFlags) > 0 && l.FeatureFlags["DisableAnalytics"] == "true"
+	return len(l.FeatureFlags) > 0 && l.FeatureFlags[FeatureDisableAnalytics] == "true"
+}
+
+func (l License) EnableClientBilling() bool {
+	return len(l.FeatureFlags) > 0 && l.FeatureFlags[FeatureEnableClientBilling] == "true"
+}
+
+func (l License) ActivationMode() ActivationMode {
+	if l.FeatureFlags[FeatureActivationMode] == string(ActivationModeCertification) {
+		return ActivationModeCertification
+	}
+	return ActivationModeFull
 }
 
 func (i *License) Less(j *License) bool {
@@ -52,11 +63,12 @@ func (i *License) Less(j *License) bool {
 
 func rankTier(t string) int {
 	// prefer enterprise licenses in a min priority queue
-	if t == "enterprise" {
+	switch t {
+	case "enterprise":
 		return 0
-	} else if t == "" {
+	case "":
 		return 2
-	} else {
+	default:
 		return 1
 	}
 }

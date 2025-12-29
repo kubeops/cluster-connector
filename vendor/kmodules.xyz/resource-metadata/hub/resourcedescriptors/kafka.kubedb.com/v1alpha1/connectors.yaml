@@ -1,7 +1,6 @@
 apiVersion: meta.k8s.appscode.com/v1alpha1
 kind: ResourceDescriptor
 metadata:
-  creationTimestamp: null
   labels:
     k8s.io/group: kafka.kubedb.com
     k8s.io/kind: Connector
@@ -60,6 +59,7 @@ spec:
             configSecret:
               properties:
                 name:
+                  default: ""
                   type: string
               type: object
               x-kubernetes-map-type: atomic
@@ -72,7 +72,7 @@ spec:
               required:
               - name
               type: object
-            terminationPolicy:
+            deletionPolicy:
               enum:
               - Halt
               - Delete

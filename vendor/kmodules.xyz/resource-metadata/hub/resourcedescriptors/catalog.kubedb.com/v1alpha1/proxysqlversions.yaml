@@ -1,7 +1,6 @@
 apiVersion: meta.k8s.appscode.com/v1alpha1
 kind: ResourceDescriptor
 metadata:
-  creationTimestamp: null
   labels:
     k8s.io/group: catalog.kubedb.com
     k8s.io/kind: ProxySQLVersion
@@ -51,6 +50,8 @@ spec:
           properties:
             deprecated:
               type: boolean
+            endOfLife:
+              type: boolean
             exporter:
               properties:
                 image:
@@ -78,6 +79,21 @@ spec:
                   format: int64
                   type: integer
               type: object
+            ui:
+              items:
+                properties:
+                  disable:
+                    type: boolean
+                  name:
+                    type: string
+                  values:
+                    x-kubernetes-preserve-unknown-fields: true
+                  version:
+                    type: string
+                required:
+                - name
+                type: object
+              type: array
             updateConstraints:
               properties:
                 allowlist:

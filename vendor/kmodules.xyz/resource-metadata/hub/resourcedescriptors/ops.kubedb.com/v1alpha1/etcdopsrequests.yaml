@@ -1,7 +1,6 @@
 apiVersion: meta.k8s.appscode.com/v1alpha1
 kind: ResourceDescriptor
 metadata:
-  creationTimestamp: null
   labels:
     k8s.io/group: ops.kubedb.com
     k8s.io/kind: EtcdOpsRequest
@@ -9,15 +8,6 @@ metadata:
     k8s.io/version: v1alpha1
   name: ops.kubedb.com-v1alpha1-etcdopsrequests
 spec:
-  connections:
-  - labels:
-    - ops
-    references:
-    - '{.spec.databaseRef.name}'
-    target:
-      apiVersion: kubedb.com/v1alpha2
-      kind: Etcd
-    type: MatchRef
   resource:
     group: ops.kubedb.com
     kind: EtcdOpsRequest
@@ -72,16 +62,39 @@ spec:
               - IfReady
               - Always
               type: string
+            authentication:
+              properties:
+                secretRef:
+                  properties:
+                    apiGroup:
+                      default: ""
+                      type: string
+                    kind:
+                      default: Secret
+                      type: string
+                    name:
+                      type: string
+                  required:
+                  - kind
+                  - name
+                  type: object
+                  x-kubernetes-map-type: atomic
+              type: object
             configuration:
               type: object
             databaseRef:
               properties:
                 name:
+                  default: ""
                   type: string
               type: object
               x-kubernetes-map-type: atomic
             horizontalScaling:
               type: object
+            maxRetries:
+              default: 1
+              format: int32
+              type: integer
             restart:
               type: object
             tls:
@@ -198,6 +211,7 @@ spec:
               - Restart
               - Reconfigure
               - ReconfigureTLS
+              - RotateAuth
               type: string
             updateVersion:
               properties:

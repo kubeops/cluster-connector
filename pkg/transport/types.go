@@ -52,7 +52,7 @@ type PersistableTLSConfig struct {
 // TLSConfigFor returns a tls.Config that will provide the transport level security defined
 // by the provided Config. Will return nil if no transport level security is requested.
 func PersistableTLSConfigFor(c *transport.Config) (*PersistableTLSConfig, error) {
-	if !(c.HasCA() || c.HasCertAuth() || c.HasCertCallback() || c.TLS.Insecure || len(c.TLS.ServerName) > 0 || len(c.TLS.NextProtos) > 0) {
+	if !c.HasCA() && !c.HasCertAuth() && !c.HasCertCallback() && !c.TLS.Insecure && len(c.TLS.ServerName) <= 0 && len(c.TLS.NextProtos) <= 0 {
 		return nil, nil
 	}
 	if c.HasCA() && c.TLS.Insecure {
@@ -116,7 +116,7 @@ func (c *PersistableTLSConfig) HasCertAuth() bool {
 // TLSConfigFor returns a tls.Config that will provide the transport level security defined
 // by the provided Config. Will return nil if no transport level security is requested.
 func (c *PersistableTLSConfig) TLSConfigFor() (*tls.Config, error) {
-	if !(c.HasCA() || c.HasCertAuth() || c.Insecure || len(c.ServerName) > 0 || len(c.NextProtos) > 0) {
+	if !c.HasCA() && !c.HasCertAuth() && !c.Insecure && len(c.ServerName) <= 0 && len(c.NextProtos) <= 0 {
 		return nil, nil
 	}
 	if c.HasCA() && c.Insecure {

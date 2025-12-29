@@ -41,8 +41,8 @@ type Kafka struct{}
 
 func (r Kafka) ResourceCalculator() api.ResourceCalculator {
 	return &api.ResourceCalculatorFuncs{
-		AppRoles:               []api.PodRole{api.PodRoleDefault},
-		RuntimeRoles:           []api.PodRole{api.PodRoleDefault, api.PodRoleExporter},
+		AppRoles:               []api.PodRole{api.PodRoleDefault, api.PodRoleBroker, api.PodRoleController, api.PodRoleCombined},
+		RuntimeRoles:           []api.PodRole{api.PodRoleDefault, api.PodRoleBroker, api.PodRoleController, api.PodRoleCombined, api.PodRoleExporter},
 		RoleReplicasFn:         r.roleReplicasFn,
 		ModeFn:                 r.modeFn,
 		UsesTLSFn:              r.usesTLSFn,
@@ -51,7 +51,7 @@ func (r Kafka) ResourceCalculator() api.ResourceCalculator {
 	}
 }
 
-func (r Kafka) roleReplicasFn(obj map[string]interface{}) (api.ReplicaList, error) {
+func (r Kafka) roleReplicasFn(obj map[string]any) (api.ReplicaList, error) {
 	result := api.ReplicaList{}
 
 	topology, found, err := unstructured.NestedMap(obj, "spec", "topology")
@@ -60,18 +60,15 @@ func (r Kafka) roleReplicasFn(obj map[string]interface{}) (api.ReplicaList, erro
 	}
 	if found && topology != nil {
 		// dedicated topology mode
-		var replicas int64 = 0
 		for role, roleSpec := range topology {
-			roleReplicas, found, err := unstructured.NestedInt64(roleSpec.(map[string]interface{}), "replicas")
+			roleReplicas, found, err := unstructured.NestedInt64(roleSpec.(map[string]any), "replicas")
 			if err != nil {
 				return nil, err
 			}
 			if found {
 				result[api.PodRole(role)] = roleReplicas
-				replicas += roleReplicas
 			}
 		}
-		result[api.PodRoleDefault] = replicas
 	} else {
 		// Combined mode
 		replicas, found, err := unstructured.NestedInt64(obj, "spec", "replicas")
@@ -87,7 +84,7 @@ func (r Kafka) roleReplicasFn(obj map[string]interface{}) (api.ReplicaList, erro
 	return result, nil
 }
 
-func (r Kafka) modeFn(obj map[string]interface{}) (string, error) {
+func (r Kafka) modeFn(obj map[string]any) (string, error) {
 	topology, found, err := unstructured.NestedFieldNoCopy(obj, "spec", "topology")
 	if err != nil {
 		return "", err
@@ -98,13 +95,13 @@ func (r Kafka) modeFn(obj map[string]interface{}) (string, error) {
 	return DBModeCombined, nil
 }
 
-func (r Kafka) usesTLSFn(obj map[string]interface{}) (bool, error) {
+func (r Kafka) usesTLSFn(obj map[string]any) (bool, error) {
 	_, found, err := unstructured.NestedFieldNoCopy(obj, "spec", "enableSSL")
 	return found, err
 }
 
-func (r Kafka) roleResourceFn(fn func(rr core.ResourceRequirements) core.ResourceList) func(obj map[string]interface{}) (map[api.PodRole]core.ResourceList, error) {
-	return func(obj map[string]interface{}) (map[api.PodRole]core.ResourceList, error) {
+func (r Kafka) roleResourceFn(fn func(rr core.ResourceRequirements) core.ResourceList) func(obj map[string]any) (map[api.PodRole]api.PodInfo, error) {
+	return func(obj map[string]any) (map[api.PodRole]api.PodInfo, error) {
 		exporter, err := api.ContainerResources(obj, fn, "spec", "monitor", "prometheus", "exporter")
 		if err != nil {
 			return nil, err
@@ -116,22 +113,18 @@ func (r Kafka) roleResourceFn(fn func(rr core.ResourceRequirements) core.Resourc
 		}
 		if found && topology != nil {
 			var replicas int64 = 0
-			var totalResources core.ResourceList
-			result := map[api.PodRole]core.ResourceList{}
+			result := map[api.PodRole]api.PodInfo{}
 
 			for role, roleSpec := range topology {
-				rolePerReplicaResources, roleReplicas, err := KafkaNodeResources(roleSpec.(map[string]interface{}), fn)
+				rolePerReplicaResources, roleReplicas, err := KafkaNodeResources(roleSpec.(map[string]any), fn)
 				if err != nil {
 					return nil, err
 				}
-
-				roleResources := api.MulResourceList(rolePerReplicaResources, roleReplicas)
-				result[api.PodRole(role)] = roleResources
-				totalResources = api.AddResourceList(totalResources, roleResources)
+				replicas += roleReplicas
+				result[api.PodRole(role)] = api.PodInfo{Resource: rolePerReplicaResources, Replicas: roleReplicas}
 			}
 
-			result[api.PodRoleDefault] = totalResources
-			result[api.PodRoleExporter] = api.MulResourceList(exporter, replicas)
+			result[api.PodRoleExporter] = api.PodInfo{Resource: exporter, Replicas: replicas}
 			return result, nil
 		}
 
@@ -141,9 +134,9 @@ func (r Kafka) roleResourceFn(fn func(rr core.ResourceRequirements) core.Resourc
 			return nil, err
 		}
 
-		return map[api.PodRole]core.ResourceList{
-			api.PodRoleDefault:  api.MulResourceList(container, replicas),
-			api.PodRoleExporter: api.MulResourceList(exporter, replicas),
+		return map[api.PodRole]api.PodInfo{
+			api.PodRoleDefault:  {Resource: container, Replicas: replicas},
+			api.PodRoleExporter: {Resource: exporter, Replicas: replicas},
 		}, nil
 	}
 }
@@ -155,7 +148,7 @@ type KafkaNode struct {
 }
 
 func KafkaNodeResources(
-	obj map[string]interface{},
+	obj map[string]any,
 	fn func(rr core.ResourceRequirements) core.ResourceList,
 	fields ...string,
 ) (core.ResourceList, int64, error) {
@@ -165,7 +158,7 @@ func KafkaNodeResources(
 	}
 
 	var node KafkaNode
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(val.(map[string]interface{}), &node)
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(val.(map[string]any), &node)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to parse node %#v: %w", node, err)
 	}

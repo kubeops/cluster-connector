@@ -79,6 +79,15 @@ func GetContainerByName(containers []core.Container, name string) *core.Containe
 	return nil
 }
 
+func GetContainerIdByName(containers []core.Container, name string) int {
+	for i := range containers {
+		if containers[i].Name == name {
+			return i
+		}
+	}
+	return -1
+}
+
 func UpsertContainer(containers []core.Container, upsert core.Container) []core.Container {
 	for i, container := range containers {
 		if container.Name == upsert.Name {
@@ -251,7 +260,7 @@ func GetVolumeMountByName(volumeMounts []core.VolumeMount, name string) *core.Vo
 func UpsertVolumeMount(mounts []core.VolumeMount, nv ...core.VolumeMount) []core.VolumeMount {
 	upsert := func(m core.VolumeMount) {
 		for i, vol := range mounts {
-			if vol.Name == m.Name {
+			if vol.MountPath == m.MountPath {
 				mounts[i] = m
 				return
 			}

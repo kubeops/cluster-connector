@@ -18,8 +18,6 @@ package v1alpha1
 
 import (
 	"kmodules.xyz/resource-metrics/api"
-
-	core "k8s.io/api/core/v1"
 )
 
 type OpsResourceCalculator struct{}
@@ -36,7 +34,7 @@ func (r OpsResourceCalculator) ResourceCalculator() api.ResourceCalculator {
 	}
 }
 
-func (r OpsResourceCalculator) roleReplicasFn(opsObj map[string]interface{}) (api.ReplicaList, error) {
+func (r OpsResourceCalculator) roleReplicasFn(opsObj map[string]any) (api.ReplicaList, error) {
 	scaledObject, err := GetScaledObject(opsObj)
 	if err != nil {
 		return nil, err
@@ -49,7 +47,7 @@ func (r OpsResourceCalculator) roleReplicasFn(opsObj map[string]interface{}) (ap
 	return c.RoleReplicas(scaledObject)
 }
 
-func (r OpsResourceCalculator) modeFn(opsObj map[string]interface{}) (string, error) {
+func (r OpsResourceCalculator) modeFn(opsObj map[string]any) (string, error) {
 	scaledObject, err := GetScaledObject(opsObj)
 	if err != nil {
 		return "", err
@@ -62,7 +60,7 @@ func (r OpsResourceCalculator) modeFn(opsObj map[string]interface{}) (string, er
 	return c.Mode(scaledObject)
 }
 
-func (r OpsResourceCalculator) usesTLSFn(opsObj map[string]interface{}) (bool, error) {
+func (r OpsResourceCalculator) usesTLSFn(opsObj map[string]any) (bool, error) {
 	scaledObject, err := GetScaledObject(opsObj)
 	if err != nil {
 		return false, err
@@ -75,7 +73,7 @@ func (r OpsResourceCalculator) usesTLSFn(opsObj map[string]interface{}) (bool, e
 	return c.UsesTLS(scaledObject)
 }
 
-func (r OpsResourceCalculator) roleResourceLimitsFn(opsObj map[string]interface{}) (map[api.PodRole]core.ResourceList, error) {
+func (r OpsResourceCalculator) roleResourceLimitsFn(opsObj map[string]any) (map[api.PodRole]api.PodInfo, error) {
 	scaledObject, err := GetScaledObject(opsObj)
 	if err != nil {
 		return nil, err
@@ -85,10 +83,12 @@ func (r OpsResourceCalculator) roleResourceLimitsFn(opsObj map[string]interface{
 	if err != nil {
 		return nil, err
 	}
-	return c.RoleResourceLimits(scaledObject)
+
+	dbLimitFunc := c.GetRoleResourceLimitsFn()
+	return dbLimitFunc(scaledObject)
 }
 
-func (r OpsResourceCalculator) roleResourceRequestsFn(opsObj map[string]interface{}) (map[api.PodRole]core.ResourceList, error) {
+func (r OpsResourceCalculator) roleResourceRequestsFn(opsObj map[string]any) (map[api.PodRole]api.PodInfo, error) {
 	scaledObject, err := GetScaledObject(opsObj)
 	if err != nil {
 		return nil, err
@@ -98,5 +98,7 @@ func (r OpsResourceCalculator) roleResourceRequestsFn(opsObj map[string]interfac
 	if err != nil {
 		return nil, err
 	}
-	return c.RoleResourceRequests(scaledObject)
+
+	dbRequestFunc := c.GetRoleResourceRequestsFn()
+	return dbRequestFunc(scaledObject)
 }

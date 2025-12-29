@@ -106,6 +106,10 @@ func validateChartName(cf *chart.Metadata) error {
 	if cf.Name == "" {
 		return errors.New("name is required")
 	}
+	name := filepath.Base(cf.Name)
+	if name != cf.Name {
+		return fmt.Errorf("chart name %q is invalid", cf.Name)
+	}
 	return nil
 }
 
@@ -147,6 +151,9 @@ func validateChartVersion(cf *chart.Metadata) error {
 
 func validateChartMaintainer(cf *chart.Metadata) error {
 	for _, maintainer := range cf.Maintainers {
+		if maintainer == nil {
+			return errors.New("a maintainer entry is empty")
+		}
 		if maintainer.Name == "" {
 			return errors.New("each maintainer requires a name")
 		} else if maintainer.Email != "" && !govalidator.IsEmail(maintainer.Email) {

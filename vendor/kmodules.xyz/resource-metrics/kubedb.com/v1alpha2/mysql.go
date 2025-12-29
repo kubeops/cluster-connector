@@ -48,7 +48,7 @@ func (r MySQL) ResourceCalculator() api.ResourceCalculator {
 	}
 }
 
-func (r MySQL) roleReplicasFn(obj map[string]interface{}) (api.ReplicaList, error) {
+func (r MySQL) roleReplicasFn(obj map[string]any) (api.ReplicaList, error) {
 	result := api.ReplicaList{}
 
 	// Standalone or GroupReplication Mode
@@ -82,7 +82,7 @@ func (r MySQL) roleReplicasFn(obj map[string]interface{}) (api.ReplicaList, erro
 	return result, nil
 }
 
-func (r MySQL) modeFn(obj map[string]interface{}) (string, error) {
+func (r MySQL) modeFn(obj map[string]any) (string, error) {
 	mode, found, err := unstructured.NestedString(obj, "spec", "topology", "mode")
 	if err != nil {
 		return "", err
@@ -93,13 +93,13 @@ func (r MySQL) modeFn(obj map[string]interface{}) (string, error) {
 	return DBModeStandalone, nil
 }
 
-func (r MySQL) usesTLSFn(obj map[string]interface{}) (bool, error) {
+func (r MySQL) usesTLSFn(obj map[string]any) (bool, error) {
 	_, found, err := unstructured.NestedFieldNoCopy(obj, "spec", "tls")
 	return found, err
 }
 
-func (r MySQL) roleResourceFn(fn func(rr core.ResourceRequirements) core.ResourceList) func(obj map[string]interface{}) (map[api.PodRole]core.ResourceList, error) {
-	return func(obj map[string]interface{}) (map[api.PodRole]core.ResourceList, error) {
+func (r MySQL) roleResourceFn(fn func(rr core.ResourceRequirements) core.ResourceList) func(obj map[string]any) (map[api.PodRole]api.PodInfo, error) {
+	return func(obj map[string]any) (map[api.PodRole]api.PodInfo, error) {
 		container, replicas, err := api.AppNodeResources(obj, fn, "spec")
 		if err != nil {
 			return nil, err
@@ -110,9 +110,9 @@ func (r MySQL) roleResourceFn(fn func(rr core.ResourceRequirements) core.Resourc
 			return nil, err
 		}
 
-		result := map[api.PodRole]core.ResourceList{
-			api.PodRoleDefault:  api.MulResourceList(container, replicas),
-			api.PodRoleExporter: api.MulResourceList(exporter, replicas),
+		result := map[api.PodRole]api.PodInfo{
+			api.PodRoleDefault:  {Resource: container, Replicas: replicas},
+			api.PodRoleExporter: {Resource: exporter, Replicas: replicas},
 		}
 
 		// InnoDB Router
@@ -125,7 +125,7 @@ func (r MySQL) roleResourceFn(fn func(rr core.ResourceRequirements) core.Resourc
 			if err != nil {
 				return nil, err
 			}
-			result[api.PodRoleRouter] = api.MulResourceList(router, replicas)
+			result[api.PodRoleRouter] = api.PodInfo{Resource: router, Replicas: replicas}
 		}
 		return result, nil
 	}

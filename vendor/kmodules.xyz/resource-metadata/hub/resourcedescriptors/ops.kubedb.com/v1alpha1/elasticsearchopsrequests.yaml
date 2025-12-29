@@ -1,7 +1,6 @@
 apiVersion: meta.k8s.appscode.com/v1alpha1
 kind: ResourceDescriptor
 metadata:
-  creationTimestamp: null
   labels:
     k8s.io/group: ops.kubedb.com
     k8s.io/kind: ElasticsearchOpsRequest
@@ -15,7 +14,7 @@ spec:
     references:
     - '{.spec.databaseRef.name}'
     target:
-      apiVersion: kubedb.com/v1alpha2
+      apiVersion: kubedb.com/v1
       kind: Elasticsearch
     type: MatchRef
   resource:
@@ -72,6 +71,24 @@ spec:
               - IfReady
               - Always
               type: string
+            authentication:
+              properties:
+                secretRef:
+                  properties:
+                    apiGroup:
+                      default: ""
+                      type: string
+                    kind:
+                      default: Secret
+                      type: string
+                    name:
+                      type: string
+                  required:
+                  - kind
+                  - name
+                  type: object
+                  x-kubernetes-map-type: atomic
+              type: object
             configuration:
               properties:
                 applyConfig:
@@ -81,6 +98,7 @@ spec:
                 configSecret:
                   properties:
                     name:
+                      default: ""
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
@@ -91,6 +109,7 @@ spec:
                 secureConfigSecret:
                   properties:
                     name:
+                      default: ""
                       type: string
                   type: object
                   x-kubernetes-map-type: atomic
@@ -98,6 +117,7 @@ spec:
             databaseRef:
               properties:
                 name:
+                  default: ""
                   type: string
               type: object
               x-kubernetes-map-type: atomic
@@ -143,6 +163,10 @@ spec:
                       type: integer
                   type: object
               type: object
+            maxRetries:
+              default: 1
+              format: int32
+              type: integer
             restart:
               type: object
             timeout:
@@ -262,6 +286,7 @@ spec:
               - Restart
               - Reconfigure
               - ReconfigureTLS
+              - RotateAuth
               type: string
             updateVersion:
               properties:
@@ -273,9 +298,6 @@ spec:
                 coordinating:
                   properties:
                     nodeSelectionPolicy:
-                      enum:
-                      - LabelSelector
-                      - Taint
                       type: string
                     resources:
                       properties:
@@ -283,6 +305,8 @@ spec:
                           items:
                             properties:
                               name:
+                                type: string
+                              request:
                                 type: string
                             required:
                             - name
@@ -322,9 +346,6 @@ spec:
                 data:
                   properties:
                     nodeSelectionPolicy:
-                      enum:
-                      - LabelSelector
-                      - Taint
                       type: string
                     resources:
                       properties:
@@ -332,6 +353,8 @@ spec:
                           items:
                             properties:
                               name:
+                                type: string
+                              request:
                                 type: string
                             required:
                             - name
@@ -371,9 +394,6 @@ spec:
                 dataCold:
                   properties:
                     nodeSelectionPolicy:
-                      enum:
-                      - LabelSelector
-                      - Taint
                       type: string
                     resources:
                       properties:
@@ -381,6 +401,8 @@ spec:
                           items:
                             properties:
                               name:
+                                type: string
+                              request:
                                 type: string
                             required:
                             - name
@@ -420,9 +442,6 @@ spec:
                 dataContent:
                   properties:
                     nodeSelectionPolicy:
-                      enum:
-                      - LabelSelector
-                      - Taint
                       type: string
                     resources:
                       properties:
@@ -430,6 +449,8 @@ spec:
                           items:
                             properties:
                               name:
+                                type: string
+                              request:
                                 type: string
                             required:
                             - name
@@ -469,9 +490,6 @@ spec:
                 dataFrozen:
                   properties:
                     nodeSelectionPolicy:
-                      enum:
-                      - LabelSelector
-                      - Taint
                       type: string
                     resources:
                       properties:
@@ -479,6 +497,8 @@ spec:
                           items:
                             properties:
                               name:
+                                type: string
+                              request:
                                 type: string
                             required:
                             - name
@@ -518,9 +538,6 @@ spec:
                 dataHot:
                   properties:
                     nodeSelectionPolicy:
-                      enum:
-                      - LabelSelector
-                      - Taint
                       type: string
                     resources:
                       properties:
@@ -528,6 +545,8 @@ spec:
                           items:
                             properties:
                               name:
+                                type: string
+                              request:
                                 type: string
                             required:
                             - name
@@ -567,9 +586,6 @@ spec:
                 dataWarm:
                   properties:
                     nodeSelectionPolicy:
-                      enum:
-                      - LabelSelector
-                      - Taint
                       type: string
                     resources:
                       properties:
@@ -577,6 +593,8 @@ spec:
                           items:
                             properties:
                               name:
+                                type: string
+                              request:
                                 type: string
                             required:
                             - name
@@ -622,6 +640,8 @@ spec:
                             properties:
                               name:
                                 type: string
+                              request:
+                                type: string
                             required:
                             - name
                             type: object
@@ -650,9 +670,6 @@ spec:
                 ingest:
                   properties:
                     nodeSelectionPolicy:
-                      enum:
-                      - LabelSelector
-                      - Taint
                       type: string
                     resources:
                       properties:
@@ -660,6 +677,8 @@ spec:
                           items:
                             properties:
                               name:
+                                type: string
+                              request:
                                 type: string
                             required:
                             - name
@@ -699,9 +718,6 @@ spec:
                 master:
                   properties:
                     nodeSelectionPolicy:
-                      enum:
-                      - LabelSelector
-                      - Taint
                       type: string
                     resources:
                       properties:
@@ -709,6 +725,8 @@ spec:
                           items:
                             properties:
                               name:
+                                type: string
+                              request:
                                 type: string
                             required:
                             - name
@@ -748,9 +766,6 @@ spec:
                 ml:
                   properties:
                     nodeSelectionPolicy:
-                      enum:
-                      - LabelSelector
-                      - Taint
                       type: string
                     resources:
                       properties:
@@ -758,6 +773,8 @@ spec:
                           items:
                             properties:
                               name:
+                                type: string
+                              request:
                                 type: string
                             required:
                             - name
@@ -797,9 +814,6 @@ spec:
                 node:
                   properties:
                     nodeSelectionPolicy:
-                      enum:
-                      - LabelSelector
-                      - Taint
                       type: string
                     resources:
                       properties:
@@ -807,6 +821,8 @@ spec:
                           items:
                             properties:
                               name:
+                                type: string
+                              request:
                                 type: string
                             required:
                             - name
@@ -846,9 +862,6 @@ spec:
                 transform:
                   properties:
                     nodeSelectionPolicy:
-                      enum:
-                      - LabelSelector
-                      - Taint
                       type: string
                     resources:
                       properties:
@@ -856,6 +869,8 @@ spec:
                           items:
                             properties:
                               name:
+                                type: string
+                              request:
                                 type: string
                             required:
                             - name

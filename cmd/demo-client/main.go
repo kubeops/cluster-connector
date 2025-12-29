@@ -29,7 +29,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	"k8s.io/klog/v2/klogr"
+	"k8s.io/klog/v2"
 	clustermeta "kmodules.xyz/client-go/cluster"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -41,8 +41,9 @@ func main() {
 	flag.StringVar(&licenseFile, "license-file", licenseFile, "Path to license file")
 	flag.Parse()
 
-	ctrl.SetLogger(klogr.New()) // nolint:staticcheck
+	ctrl.SetLogger(klog.NewKlogr())
 	config := ctrl.GetConfigOrDie()
+	config.WarningHandler = rest.NoWarnings{}
 
 	// 	tr, err := cfg.TransportConfig()
 	// 	if err != nil {
@@ -65,10 +66,6 @@ func main() {
 	c, err := client.New(config, client.Options{
 		Scheme: clientgoscheme.Scheme,
 		Mapper: mapper,
-		WarningHandler: client.WarningHandlerOptions{
-			SuppressWarnings:   false,
-			AllowDuplicateLogs: false,
-		},
 	})
 	if err != nil {
 		panic(err)
@@ -79,7 +76,8 @@ func main() {
 		panic(err)
 	}
 
-	ncfg, err := auditlib.NewNatsConfig(config, cid, licenseFile)
+	ncc := auditlib.NewNatsClient(config, cid, licenseFile)
+	nc, err := ncc.Connect()
 	if err != nil {
 		panic(err)
 	}
@@ -88,7 +86,7 @@ func main() {
 	// k8s.io/client-go/rest/config.go
 	// k8s.io/client-go/transport/transport.go # TLSConfigFor
 
-	c2, err := rest2.GetForRestConfig(config, ncfg.Client, shared.CrossAccountNames{LinkID: cid})
+	c2, err := rest2.GetForRestConfig(config, nc, shared.CrossAccountNames{LinkID: cid})
 	if err != nil {
 		panic(err)
 	}

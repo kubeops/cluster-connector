@@ -40,7 +40,7 @@ import (
 	utilnet "k8s.io/apimachinery/pkg/util/net"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
-	"k8s.io/klog/v2/klogr"
+	"k8s.io/klog/v2"
 	clustermeta "kmodules.xyz/client-go/cluster"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -113,7 +113,7 @@ func handle(w http.ResponseWriter, r *http.Request, nc *nats.Conn) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // nolint:errcheck
 
 	w.WriteHeader(resp.StatusCode)
 	_, err = io.Copy(w, resp.Body)
@@ -125,8 +125,9 @@ func getNatsClient() (*nats.Conn, error) {
 	flag.StringVar(&licenseFile, "license-file", licenseFile, "Path to license file")
 	flag.Parse()
 
-	ctrl.SetLogger(klogr.New()) // nolint:staticcheck
+	ctrl.SetLogger(klog.NewKlogr())
 	config := ctrl.GetConfigOrDie()
+	config.WarningHandler = rest.NoWarnings{}
 
 	// 	tr, err := cfg.TransportConfig()
 	// 	if err != nil {
@@ -149,10 +150,6 @@ func getNatsClient() (*nats.Conn, error) {
 	c, err := client.New(config, client.Options{
 		Scheme: clientgoscheme.Scheme,
 		Mapper: mapper,
-		WarningHandler: client.WarningHandlerOptions{
-			SuppressWarnings:   false,
-			AllowDuplicateLogs: false,
-		},
 	})
 	if err != nil {
 		return nil, err
@@ -163,10 +160,6 @@ func getNatsClient() (*nats.Conn, error) {
 		return nil, err
 	}
 
-	ncfg, err := auditlib.NewNatsConfig(config, cid, licenseFile)
-	if err != nil {
-		return nil, err
-	}
-
-	return ncfg.Client, nil
+	nc := auditlib.NewNatsClient(config, cid, licenseFile)
+	return nc.Connect()
 }

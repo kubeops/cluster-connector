@@ -31,9 +31,9 @@ func LoadPresetValues(kc client.Client, ref chartsapi.ChartPresetFlatRef) ([]cha
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to detect resource ID for %#v", *rid)
 	}
-	ed, ok := resourceeditors.LoadByGVR(kc, rid.GroupVersionResource())
-	if !ok {
-		return nil, errors.Errorf("failed to detect ResourceEditor for %#v", rid.GroupVersionResource())
+	ed, err := resourceeditors.LoadByGVR(kc, rid.GroupVersionResource())
+	if err != nil {
+		return nil, err
 	}
 
 	var variant *uiapi.VariantRef
@@ -152,6 +152,8 @@ func bundleChartPresets(kc client.Client, ns string, sel labels.Selector, knownP
 					Namespace: cp.Namespace,
 					Name:      cp.Namespace,
 				},
+				UID:        cp.UID,
+				Generation: cp.Generation,
 			},
 			Values: cp.Spec.Values,
 		})
@@ -188,6 +190,8 @@ func bundleClusterChartPresets(kc client.Client, sel labels.Selector, knownPrese
 					Namespace: ccp.Namespace,
 					Name:      ccp.Namespace,
 				},
+				UID:        ccp.UID,
+				Generation: ccp.Generation,
 			},
 			Values: ccp.Spec.Values,
 		})
@@ -195,7 +199,7 @@ func bundleClusterChartPresets(kc client.Client, sel labels.Selector, knownPrese
 	return values, nil
 }
 
-func MergePresetValues(kc client.Client, chrt *chart.Chart, ref chartsapi.ChartPresetFlatRef) (map[string]interface{}, error) {
+func MergePresetValues(kc client.Client, chrt *chart.Chart, ref chartsapi.ChartPresetFlatRef) (map[string]any, error) {
 	presets, err := LoadPresetValues(kc, ref)
 	if err != nil {
 		return nil, err

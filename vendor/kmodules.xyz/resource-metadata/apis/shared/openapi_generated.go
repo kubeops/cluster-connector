@@ -39,6 +39,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"kmodules.xyz/resource-metadata/apis/shared.Dashboard":            schema_kmodulesxyz_resource_metadata_apis_shared_Dashboard(ref),
 		"kmodules.xyz/resource-metadata/apis/shared.DashboardVar":         schema_kmodulesxyz_resource_metadata_apis_shared_DashboardVar(ref),
 		"kmodules.xyz/resource-metadata/apis/shared.DeploymentParameters": schema_kmodulesxyz_resource_metadata_apis_shared_DeploymentParameters(ref),
+		"kmodules.xyz/resource-metadata/apis/shared.DistroSpec":           schema_kmodulesxyz_resource_metadata_apis_shared_DistroSpec(ref),
 		"kmodules.xyz/resource-metadata/apis/shared.HelmInfo":             schema_kmodulesxyz_resource_metadata_apis_shared_HelmInfo(ref),
 		"kmodules.xyz/resource-metadata/apis/shared.HelmRelease":          schema_kmodulesxyz_resource_metadata_apis_shared_HelmRelease(ref),
 		"kmodules.xyz/resource-metadata/apis/shared.HelmRepository":       schema_kmodulesxyz_resource_metadata_apis_shared_HelmRepository(ref),
@@ -61,6 +62,12 @@ func schema_kmodulesxyz_resource_metadata_apis_shared_Action(ref common.Referenc
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"name": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"icon": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -132,6 +139,12 @@ func schema_kmodulesxyz_resource_metadata_apis_shared_ActionGroup(ref common.Ref
 							Format: "",
 						},
 					},
+					"icon": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"description": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -172,6 +185,12 @@ func schema_kmodulesxyz_resource_metadata_apis_shared_ActionInfo(ref common.Refe
 							Format: "",
 						},
 					},
+					"icon": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 					"description": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
@@ -191,6 +210,12 @@ func schema_kmodulesxyz_resource_metadata_apis_shared_ActionTemplate(ref common.
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"name": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"icon": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -247,6 +272,12 @@ func schema_kmodulesxyz_resource_metadata_apis_shared_ActionTemplate(ref common.
 							Format:  "",
 						},
 					},
+					"partOf": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"operationId", "flow", "enforceQuota"},
 			},
@@ -263,6 +294,12 @@ func schema_kmodulesxyz_resource_metadata_apis_shared_ActionTemplateGroup(ref co
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
 					"name": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"icon": {
 						SchemaProps: spec.SchemaProps{
 							Type:   []string{"string"},
 							Format: "",
@@ -452,12 +489,46 @@ func schema_kmodulesxyz_resource_metadata_apis_shared_DeploymentParameters(ref c
 	}
 }
 
+func schema_kmodulesxyz_resource_metadata_apis_shared_DistroSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"openshift": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
+					"ubi": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+				},
+				Required: []string{"openshift", "ubi"},
+			},
+		},
+	}
+}
+
 func schema_kmodulesxyz_resource_metadata_apis_shared_HelmInfo(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
+					"createNamespace": {
+						SchemaProps: spec.SchemaProps{
+							Default: false,
+							Type:    []string{"boolean"},
+							Format:  "",
+						},
+					},
 					"repositories": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"object"},
@@ -485,7 +556,7 @@ func schema_kmodulesxyz_resource_metadata_apis_shared_HelmInfo(ref common.Refere
 						},
 					},
 				},
-				Required: []string{"repositories", "releases"},
+				Required: []string{"createNamespace", "repositories", "releases"},
 			},
 		},
 		Dependencies: []string{
@@ -649,6 +720,35 @@ func schema_kmodulesxyz_resource_metadata_apis_shared_RegistryInfo(ref common.Re
 							},
 						},
 					},
+					"certs": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+					"imagePullSecrets": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -701,9 +801,25 @@ func schema_kmodulesxyz_resource_metadata_apis_shared_RegistryProxies(ref common
 							Format:      "",
 						},
 					},
+					"microsoft": {
+						SchemaProps: spec.SchemaProps{
+							Description: "mcr.microsoft.com",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"appscode": {
 						SchemaProps: spec.SchemaProps{
 							Description: "r.appscode.com",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"weaviate": {
+						SchemaProps: spec.SchemaProps{
+							Description: "cr.weaviate.io",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -731,6 +847,12 @@ func schema_kmodulesxyz_resource_metadata_apis_shared_ResourceLocator(ref common
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
 							Ref:     ref("kmodules.xyz/resource-metadata/apis/shared.ResourceQuery"),
+						},
+					},
+					"impersonate": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"boolean"},
+							Format: "",
 						},
 					},
 				},

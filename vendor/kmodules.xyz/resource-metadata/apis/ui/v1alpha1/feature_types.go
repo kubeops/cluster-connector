@@ -63,9 +63,16 @@ type FeatureSpec struct {
 	// FeatureBlock specifies the ui block name of this feature.
 	// +optional
 	FeatureBlock string `json:"featureBlock,omitempty"`
+	// FeatureExclusionGroup specifies the name of the exclusion group for features
+	// Only one feature in a feature exclusion group can be installed
+	// +optional
+	FeatureExclusionGroup string `json:"featureExclusionGroup,omitempty"`
 	// Required specifies whether this feature is mandatory or not for enabling the respecting FeatureSet.
 	// +optional
 	Recommended bool `json:"recommended,omitempty"`
+	// Disabled specify whether this feature set is disabled.
+	// +optional
+	Disabled bool `json:"disabled,omitempty"`
 	// Requirements specifies the requirements to enable this feature.
 	// +optional
 	Requirements Requirements `json:"requirements,omitempty"`
@@ -102,6 +109,7 @@ type WorkloadInfo struct {
 	metav1.GroupVersionKind `json:",inline"`
 	// Selector specifies label selector that should be used to select this workload
 	Selector map[string]string `json:"selector"`
+	Optional string            `json:"optional,omitempty"`
 }
 
 type ChartInfo struct {
@@ -110,11 +118,19 @@ type ChartInfo struct {
 	// Namespace where the respective feature resources will be deployed.
 	// +optional
 	Namespace string `json:"namespace,omitempty"`
+	// +optional
+	CreateNamespace bool `json:"createNamespace,omitempty"`
 	// Version specifies the version of the chart.
 	// +optional
 	Version string `json:"version,omitempty"`
 	// SourceRef specifies the source of the chart
 	SourceRef v1.TypedObjectReference `json:"sourceRef"`
+	// Alternative list of values files to use as the chart values (values.yaml
+	// is not included by default), expected to be a relative path in the SourceRef.
+	// Values files are merged in the order of this list with the last file overriding
+	// the first. Ignored when omitted.
+	// +optional
+	ValuesFiles []string `json:"valuesFiles,omitempty"`
 }
 
 // copied from: https://github.com/fluxcd/helm-controller/blob/v0.37.4/api/v2beta2/reference_types.go#L45-L80
