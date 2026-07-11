@@ -211,7 +211,7 @@ func addSubscribers(nc *nats.Conn, names shared.SubjectNames) error {
 			}
 		}
 		if resp != nil && resp.Body != nil {
-			defer resp.Body.Close()
+			defer func() { _ = resp.Body.Close() }()
 		}
 
 		ncw := &natsWriter{
