@@ -210,6 +210,9 @@ func addSubscribers(nc *nats.Conn, names shared.SubjectNames) error {
 				resp.Uncompressed = r2.DisableCompression
 			}
 		}
+		if resp != nil && resp.Body != nil {
+			defer resp.Body.Close()
+		}
 
 		ncw := &natsWriter{
 			nc:   nc,
