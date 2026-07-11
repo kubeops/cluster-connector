@@ -70,7 +70,7 @@ func main() {
 		m.Use(binding.Inject(func(injector inject.Injector) error {
 			injector.Map(fs)
 			injector.Map(bs)
-			injector.MapTo(repo.NewDiskCacheRegistry(), (repo.IRegistry)(nil))
+			injector.MapTo(repo.NewDiskCacheRegistry(), repo.IRegistry(nil))
 
 			// WARNING: Must be detected from signed-in user and connect to NATS accordingly
 			injector.Map(testUser)
