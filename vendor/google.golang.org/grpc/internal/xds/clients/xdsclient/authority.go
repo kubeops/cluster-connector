@@ -470,7 +470,7 @@ func (a *authority) handleADSResourceUpdate(serverConfig *ServerConfig, rType Re
 			// "resource-not-found" error.
 			continue
 		}
-		if serverConfig.IgnoreResourceDeletion {
+		if serverConfig.SupportsServerFeature(ServerFeatureIgnoreResourceDeletion) {
 			// Per A53, resource deletions are ignored if the
 			// `ignore_resource_deletion` server feature is enabled through the
 			// xDS client configuration. If the resource deletion is to be
@@ -570,10 +570,6 @@ func (a *authority) handleRevertingToPrimaryOnUpdate(serverConfig *ServerConfig)
 		return true
 	}
 
-	if a.logger.V(2) {
-		a.logger.Infof("Received update from non-active server %q", serverConfig)
-	}
-
 	// If the resource update is not from the current active server, it means
 	// that we have received an update either from:
 	// - a server that has a higher priority than the current active server and
@@ -586,7 +582,13 @@ func (a *authority) handleRevertingToPrimaryOnUpdate(serverConfig *ServerConfig)
 	serverIdx := a.serverIndexForConfig(serverConfig)
 	activeServerIdx := a.serverIndexForConfig(a.activeXDSChannel.serverConfig)
 	if activeServerIdx < serverIdx {
+		if a.logger.V(2) {
+			a.logger.Infof("Ignoring update from lower priority server [%d] %q", serverIdx, serverConfig)
+		}
 		return false
+	}
+	if a.logger.V(2) {
+		a.logger.Infof("Received update from higher priority server [%d] %q", serverIdx, serverConfig)
 	}
 
 	// At this point, we are guaranteed that we have received a response from a
@@ -622,7 +624,7 @@ func (a *authority) handleRevertingToPrimaryOnUpdate(serverConfig *ServerConfig)
 		// Release the reference to the channel.
 		if cfg.cleanup != nil {
 			if a.logger.V(2) {
-				a.logger.Infof("Closing lower priority server %q", cfg.serverConfig)
+				a.logger.Infof("Closing lower priority server [%d] %q", i, cfg.serverConfig)
 			}
 			cfg.cleanup()
 			cfg.cleanup = nil
@@ -782,7 +784,7 @@ func (a *authority) unwatchResource(rType ResourceType, resourceName string, wat
 			// reference to the xdsChannels.
 			if len(a.resources) == 0 {
 				if a.logger.V(2) {
-					a.logger.Infof("Removing last watch for for any resource type, releasing reference to the xdsChannel")
+					a.logger.Infof("Removing last watch for any resource type, releasing reference to the xdsChannel")
 				}
 				a.closeXDSChannels()
 			}
@@ -931,4 +933,57 @@ func (a *authority) resourceWatchStateForTesting(rType ResourceType, resourceNam
 	<-done
 
 	return state, err
+}
+
+// resourceStats returns a snapshot of the current state of all resources watched
+// by this authority. The return value is a nested map where:
+//   - The outer map's key is the resource type name (e.g., "ListenerResource").
+//   - The inner map's key is the cache state of the resource (e.g., "requested",
+//     "acked", "nacked", "does_not_exist").
+//   - The inner map's value is the total count of resources in that specific state.
+func (a *authority) resourceStats() map[string]map[string]int {
+	ret := make(chan map[string]map[string]int, 1)
+	op := func(context.Context) {
+		summary := make(map[string]map[string]int)
+		for rType, resourceMap := range a.resources {
+			typeName := rType.TypeName
+			if _, ok := summary[typeName]; !ok {
+				summary[typeName] = make(map[string]int)
+			}
+			for _, state := range resourceMap {
+				s := cacheState(state)
+				summary[typeName][s]++
+			}
+		}
+
+		ret <- summary
+	}
+	a.xdsClientSerializer.ScheduleOr(op, func() {
+		ret <- nil
+	})
+
+	return <-ret
+}
+
+// cacheState determines the metrics label string for a given resource state.
+func cacheState(r *resourceState) string {
+	switch r.md.Status {
+	case xdsresource.ServiceStatusRequested:
+		return "requested"
+	case xdsresource.ServiceStatusNotExist:
+		return "does_not_exist"
+	case xdsresource.ServiceStatusACKed:
+		return "acked"
+	case xdsresource.ServiceStatusNACKed:
+		// If the status is NACKed, it means the *latest* update failed.
+		// However, if 'r.cache' is not nil, it means we are still holding onto
+		// a previously ACKed version of the resource.
+		if r.cache != nil {
+			return "nacked_but_cached"
+		}
+		return "nacked"
+	default:
+		// Fallback for initialization states
+		return "requested"
+	}
 }
