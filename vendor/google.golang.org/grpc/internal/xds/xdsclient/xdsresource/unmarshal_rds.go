@@ -25,16 +25,19 @@ import (
 	"time"
 
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/internal/envconfig"
+	"google.golang.org/grpc/internal/xds/clients/xdsclient"
 	"google.golang.org/grpc/internal/xds/clusterspecifier"
 	"google.golang.org/grpc/internal/xds/matcher"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	v3routepb "github.com/envoyproxy/go-control-plane/envoy/config/route/v3"
+	v3matcherpb "github.com/envoyproxy/go-control-plane/envoy/type/matcher/v3"
 	v3typepb "github.com/envoyproxy/go-control-plane/envoy/type/v3"
 )
 
-func unmarshalRouteConfigResource(r *anypb.Any) (string, RouteConfigUpdate, error) {
+func unmarshalRouteConfigResource(r *anypb.Any, opts *xdsclient.DecodeOptions) (string, RouteConfigUpdate, error) {
 	r, err := UnwrapResource(r)
 	if err != nil {
 		return "", RouteConfigUpdate{}, fmt.Errorf("failed to unwrap resource: %v", err)
@@ -48,11 +51,16 @@ func unmarshalRouteConfigResource(r *anypb.Any) (string, RouteConfigUpdate, erro
 		return "", RouteConfigUpdate{}, fmt.Errorf("failed to unmarshal resource: %v", err)
 	}
 
-	u, err := generateRDSUpdateFromRouteConfiguration(rc)
+	if rc.GetName() == "" {
+		return "", RouteConfigUpdate{}, fmt.Errorf("empty resource name in route config resource")
+	}
+
+	u, err := generateRDSUpdateFromRouteConfiguration(rc, opts)
 	if err != nil {
 		return rc.GetName(), RouteConfigUpdate{}, err
 	}
 	u.Raw = r
+
 	return rc.GetName(), u, nil
 }
 
@@ -67,12 +75,12 @@ func unmarshalRouteConfigResource(r *anypb.Any) (string, RouteConfigUpdate, erro
 // The RouteConfiguration includes a list of virtualHosts, which may have zero
 // or more elements. We are interested in the element whose domains field
 // matches the server name specified in the "xds:" URI. The only field in the
-// VirtualHost proto that the we are interested in is the list of routes. We
+// VirtualHost proto that we are interested in is the list of routes. We
 // only look at the last route in the list (the default route), whose match
-// field must be empty and whose route field must be set.  Inside that route
+// field must be empty and whose route field must be set. Inside that route
 // message, the cluster field will contain the clusterName or weighted clusters
 // we are looking for.
-func generateRDSUpdateFromRouteConfiguration(rc *v3routepb.RouteConfiguration) (RouteConfigUpdate, error) {
+func generateRDSUpdateFromRouteConfiguration(rc *v3routepb.RouteConfiguration, opts *xdsclient.DecodeOptions) (RouteConfigUpdate, error) {
 	vhs := make([]*VirtualHost, 0, len(rc.GetVirtualHosts()))
 	csps, err := processClusterSpecifierPlugins(rc.ClusterSpecifierPlugins)
 	if err != nil {
@@ -83,7 +91,7 @@ func generateRDSUpdateFromRouteConfiguration(rc *v3routepb.RouteConfiguration) (
 	// ignored and not emitted by the xdsclient.
 	var cspNames = make(map[string]bool)
 	for _, vh := range rc.GetVirtualHosts() {
-		routes, cspNs, err := routesProtoToSlice(vh.Routes, csps)
+		routes, cspNs, err := routesProtoToSlice(vh.Routes, csps, opts)
 		if err != nil {
 			return RouteConfigUpdate{}, fmt.Errorf("received route is invalid: %v", err)
 		}
@@ -206,7 +214,7 @@ func generateRetryConfig(rp *v3routepb.RetryPolicy) (*RetryConfig, error) {
 	return cfg, nil
 }
 
-func routesProtoToSlice(routes []*v3routepb.Route, csps map[string]clusterspecifier.BalancerConfig) ([]*Route, map[string]bool, error) {
+func routesProtoToSlice(routes []*v3routepb.Route, csps map[string]clusterspecifier.BalancerConfig, opts *xdsclient.DecodeOptions) ([]*Route, map[string]bool, error) {
 	var routesRet []*Route
 	var cspNames = make(map[string]bool)
 	for _, r := range routes {
@@ -234,7 +242,7 @@ func routesProtoToSlice(routes []*v3routepb.Route, csps map[string]clusterspecif
 			route.Path = &pt.Path
 		case *v3routepb.RouteMatch_SafeRegex:
 			regex := pt.SafeRegex.GetRegex()
-			re, err := regexp.Compile(regex)
+			re, err := matcher.CompileSafeRegex(regex)
 			if err != nil {
 				return nil, nil, fmt.Errorf("route %+v contains an invalid regex %q", r, regex)
 			}
@@ -249,12 +257,16 @@ func routesProtoToSlice(routes []*v3routepb.Route, csps map[string]clusterspecif
 
 		for _, h := range match.GetHeaders() {
 			var header HeaderMatcher
+			// The deprecated exact/prefix/suffix/contains match fields are
+			// converted to the equivalent StringMatcher so that
+			// StringMatcherFromProto owns validation for all of them.
+			var smProto *v3matcherpb.StringMatcher
 			switch ht := h.GetHeaderMatchSpecifier().(type) {
 			case *v3routepb.HeaderMatcher_ExactMatch:
-				header.ExactMatch = &ht.ExactMatch
+				smProto = &v3matcherpb.StringMatcher{MatchPattern: &v3matcherpb.StringMatcher_Exact{Exact: ht.ExactMatch}}
 			case *v3routepb.HeaderMatcher_SafeRegexMatch:
 				regex := ht.SafeRegexMatch.GetRegex()
-				re, err := regexp.Compile(regex)
+				re, err := matcher.CompileSafeRegex(regex)
 				if err != nil {
 					return nil, nil, fmt.Errorf("route %+v contains an invalid regex %q", r, regex)
 				}
@@ -267,17 +279,25 @@ func routesProtoToSlice(routes []*v3routepb.Route, csps map[string]clusterspecif
 			case *v3routepb.HeaderMatcher_PresentMatch:
 				header.PresentMatch = &ht.PresentMatch
 			case *v3routepb.HeaderMatcher_PrefixMatch:
-				header.PrefixMatch = &ht.PrefixMatch
+				smProto = &v3matcherpb.StringMatcher{MatchPattern: &v3matcherpb.StringMatcher_Prefix{Prefix: ht.PrefixMatch}}
 			case *v3routepb.HeaderMatcher_SuffixMatch:
-				header.SuffixMatch = &ht.SuffixMatch
+				smProto = &v3matcherpb.StringMatcher{MatchPattern: &v3matcherpb.StringMatcher_Suffix{Suffix: ht.SuffixMatch}}
+			case *v3routepb.HeaderMatcher_ContainsMatch:
+				smProto = &v3matcherpb.StringMatcher{MatchPattern: &v3matcherpb.StringMatcher_Contains{Contains: ht.ContainsMatch}}
 			case *v3routepb.HeaderMatcher_StringMatch:
-				sm, err := matcher.StringMatcherFromProto(ht.StringMatch)
-				if err != nil {
-					return nil, nil, fmt.Errorf("route %+v has an invalid string matcher: %v", err, ht.StringMatch)
+				if ht.StringMatch == nil {
+					return nil, nil, fmt.Errorf("route %+v has an empty string matcher", r)
 				}
-				header.StringMatch = &sm
+				smProto = ht.StringMatch
 			default:
 				return nil, nil, fmt.Errorf("route %+v has an unrecognized header matcher: %+v", r, ht)
+			}
+			if smProto != nil {
+				sm, err := matcher.StringMatcherFromProto(smProto)
+				if err != nil {
+					return nil, nil, fmt.Errorf("route %+v has an invalid header matcher: %v", r, err)
+				}
+				header.StringMatch = &sm
 			}
 			header.Name = h.GetName()
 			invert := h.GetInvertMatch()
@@ -300,8 +320,13 @@ func routesProtoToSlice(routes []*v3routepb.Route, csps map[string]clusterspecif
 
 		switch r.GetAction().(type) {
 		case *v3routepb.Route_Route:
-			route.WeightedClusters = make(map[string]WeightedCluster)
 			action := r.GetRoute()
+
+			if envconfig.XDSAuthorityRewrite {
+				if opts != nil && opts.ServerConfig != nil && opts.ServerConfig.SupportsServerFeature(xdsclient.ServerFeatureTrustedXDSServer) {
+					route.AutoHostRewrite = action.GetAutoHostRewrite().GetValue()
+				}
+			}
 
 			// Hash Policies are only applicable for a Ring Hash LB.
 			hp, err := hashPoliciesProtoToSlice(action.HashPolicy)
@@ -312,7 +337,7 @@ func routesProtoToSlice(routes []*v3routepb.Route, csps map[string]clusterspecif
 
 			switch a := action.GetClusterSpecifier().(type) {
 			case *v3routepb.RouteAction_Cluster:
-				route.WeightedClusters[a.Cluster] = WeightedCluster{Weight: 1}
+				route.WeightedClusters = append(route.WeightedClusters, WeightedCluster{Name: a.Cluster, Weight: 1})
 			case *v3routepb.RouteAction_WeightedClusters:
 				wcs := a.WeightedClusters
 				var totalWeight uint64
@@ -325,13 +350,13 @@ func routesProtoToSlice(routes []*v3routepb.Route, csps map[string]clusterspecif
 					if totalWeight > math.MaxUint32 {
 						return nil, nil, fmt.Errorf("xds: total weight of clusters exceeds MaxUint32")
 					}
-					wc := WeightedCluster{Weight: w}
+					wc := WeightedCluster{Name: c.GetName(), Weight: w}
 					cfgs, err := processHTTPFilterOverrides(c.GetTypedPerFilterConfig())
 					if err != nil {
 						return nil, nil, fmt.Errorf("route %+v, action %+v: %v", r, a, err)
 					}
 					wc.HTTPFilterConfigOverride = cfgs
-					route.WeightedClusters[c.GetName()] = wc
+					route.WeightedClusters = append(route.WeightedClusters, wc)
 				}
 				if totalWeight == 0 {
 					return nil, nil, fmt.Errorf("route %+v, action %+v, has no valid cluster in WeightedCluster action", r, a)
